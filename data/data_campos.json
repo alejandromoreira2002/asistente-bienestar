@@ -1,0 +1,52 @@
+{
+    "ficha_datos_iniciales": [
+        {"id": "provincia", "label": "¿En qué provincia resides?", "saltar_si": []}, 
+        {"id": "ciudad", "label": "¿En qué ciudad resides?", "saltar_si": []}, 
+        {"id": "parroquia", "label": "¿En qué parroquia resides?", "saltar_si": []}, 
+        {"id": "es_estudiante", "label": "¿Eres estudiante? (responde sí o no)", "saltar_si": []}, 
+        {"id": "institucion", "label": "En qué institución estudias? (UTM u otra)", "saltar_si": [{"id": "es_estudiante", "valor": "no"}]}, 
+        {"id": "nombre_institucion", "label": "Si no es UTM, ¿Cuál es el nombre de la institución en la que estudias?", "saltar_si": [{"id": "es_estudiante", "valor": "no"}, {"id": "institucion", "valor": "utm"}]}, 
+        {"id": "facultad", "label": "¿En qué facultad estudias?", "saltar_si": [{"id": "es_estudiante", "valor": "no"}]}, 
+        {"id": "carrera", "label": "¿Qué carrera estudias?", "saltar_si": [{"id": "es_estudiante", "valor": "no"}]}, 
+        {"id": "modalidad", "label": "¿En qué modalidad estudias? (PRESENCIAL, HÍBRIDA, EN LÍNEA)", "saltar_si": [{"id": "es_estudiante", "valor": "no"}]}, 
+        {"id": "nivel", "label": "¿En qué nivel académico te encuentras?", "saltar_si": [{"id": "es_estudiante", "valor": "no"}]}
+    ],
+    "datos_identificacion": [
+        {"id": "nombres", "label": "¿Cuáles son tus nombres?", "saltar_si": []}, 
+        {"id": "apellidos", "label": "¿Cuáles son tus apellidos?", "saltar_si": []}, 
+        {"id": "cedula", "label": "¿Cuál es tu número de cédula?", "saltar_si": []}, 
+        {"id": "celular", "label": "¿Cuál es tu número de celular?", "saltar_si": []}, 
+        {"id": "correo", "label": "¿Cuál es tu correo electrónico?", "saltar_si": []}, 
+        {"id": "edad", "label": "¿Cuántos años tienes?", "saltar_si": []}, 
+        {"id": "fecha_nacimiento", "label": "¿Cuál es tu fecha de nacimiento?", "saltar_si": []}, 
+        {"id": "nacionalidad", "label": "¿Cuál es tu nacionalidad?", "saltar_si": []}, 
+        {"id": "sexo", "label": "¿Cuál es tu sexo?", "saltar_si": []}, 
+        {"id": "sexo_otro", "label": "Si el sexo es otro (no masculino ni femenino), especifique ¿cual es su sexo?", "saltar_si": [{"id": "sexo", "valor": "femenino"}, {"id": "sexo", "valor": "masculino"}]}, 
+        {"id": "identidad_genero", "label": "Con que genero se identifica? (Opcional)", "saltar_si": []}, 
+        {"id": "direccion", "label": "¿Cuál es tu dirección de domicilio?", "saltar_si": []}, 
+        {"id": "lugar_residencia", "label": "En caso de residir en otra ciudad o provincia, ¿Dónde resides actualmente?", "saltar_si": []}, 
+        {"id": "contacto_referencia", "label": "¿Cuál es el nombre y contacto de referencia?", "saltar_si": []}
+    ],
+    "area_consulta": [
+        {"id": "area_consulta", "label": "Elija el area de consulta: Ginecologia, Asesoria Juridica, Trabajo Social, Psicologia, Laboratorio Clinico", "saltar_si": []}, 
+        {"id": "area_consulta_especifica", "label": "Si tu area de consulta es Laboratorio Clinico, escoge una de las opciones especificas del area de consulta: VIH, Sifilis, Hepatitis B, Hepatitis C, Prueba de Embarazo", "saltar_si": [
+            {"id": "area_consulta", "valor": "ginecologia"}, 
+            {"id": "area_consulta", "valor": "asesoria_juridica"}, 
+            {"id": "area_consulta", "valor": "trabajo_social"}, 
+            {"id": "area_consulta", "valor": "psicologia"}
+        ]}
+    ],
+    "datos_personales": [
+        {"id": "atencion_medica_inmediata", "label": "Requiere atención médica inmediata? (Responder sí o no)", "saltar_si": []}, 
+        {"id": "embarazada", "label": "Se encuentra usted embarazada? (Responda sí o no)", "saltar_si": []}, 
+        {"id": "meses_embarazo", "label": "Si està embarazada. ¿Cuántos meses llevas embarazada?", "saltar_si": [{"id": "embarazada", "valor": "no"}]}, 
+        {"id": "discapacidad", "label": "¿Tiene alguna condicion o discapacidad?", "saltar_si": []}, 
+        {"id": "discapacidad_texto", "label": "Describa su condicion o discapacidad", "saltar_si": [{"id": "discapacidad", "valor": "no"}]}, 
+        {"id": "carnet_discapacidad", "label": "¿Tienes carnet de discapacidad?", "saltar_si": [{"id": "discapacidad", "valor": "no"}]}, 
+        {"id": "porcentaje_discapacidad", "label": "¿Que porcentaje de discapacidad tiene?", "saltar_si": [{"id": "discapacidad", "valor": "no"}]}, 
+        {"id": "estado_civil", "label": "Escoja su estado civil: Casado(a), Union de hecho, Viudo(a), Soltero(a), Divorciado(a), Separado(a), Union Libre", "saltar_si": []}, 
+        {"id": "estado_civil_otro", "label": "Si su estado civil es otro, describa su estado civil", "saltar_si": [{"id": "estado_civil", "valor": "casado"},{"id": "estado_civil", "valor": "union_hecho"},{"id": "estado_civil", "valor": "viudo"},{"id": "estado_civil", "valor": "soltero"},{"id": "estado_civil", "valor": "divorciado"},{"id": "estado_civil", "valor": "separado"},{"id": "estado_civil", "valor": "union_libre"}]}, 
+        {"id": "etnia", "label": "Escoja su pertenencia étnica-cultural: Indigena, Montubia, Blanca, Afrodescendiente, Mestiza, Otra", "saltar_si": []}, 
+        {"id": "etnia_otro", "label": "Si su etnia es otro, describa cual es su etnia", "saltar_si": [{"id": "etnia", "valor": "indigena"},{"id": "etnia", "valor": "montubia"},{"id": "etnia", "valor": "blanca"},{"id": "etnia", "valor": "afrodescendiente"},{"id": "etnia", "valor": "mestiza"}]}
+    ]
+}

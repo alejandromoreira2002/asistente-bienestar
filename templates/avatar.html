@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body style="margin: 0;">
+    <div id="unity-container" class="unity-desktop" style="height: 100vh;width: 100%;display: flex; justify-content: center; align-items: center;">
+        <canvas id="unity-canvas" width="500" height="607" tabindex="-1"
+            style="width: 500px;height: 100%;cursor: default;"></canvas>
+        <div id="unity-loading-bar" style="display: none;">
+            <div id="unity-logo"></div>
+            <div id="unity-progress-bar-empty">
+                <div id="unity-progress-bar-full" style="width: 100%;"></div>
+            </div>
+        </div>
+        <div id="unity-warning"> </div>
+    
+    </div>
+    <script>
+    // -------------------------
+    // Unity bootstrap (igual que antes)
+    // -------------------------
+    var canvas = document.querySelector("#unity-canvas");
+    function unityShowBanner(msg, type) {
+      var warningBanner = document.querySelector("#unity-warning");
+      function updateBannerVisibility() { warningBanner.style.display = warningBanner.children.length ? 'block' : 'none'; }
+      var div = document.createElement('div'); div.innerHTML = msg; warningBanner.appendChild(div);
+      if (type == 'error') div.style = 'background: red; padding: 10px;';
+      else { if (type == 'warning') div.style = 'background: yellow; padding: 10px;'; setTimeout(function(){ warningBanner.removeChild(div); updateBannerVisibility(); }, 5000); }
+      updateBannerVisibility();
+    }
+
+    var buildUrl = "../../static/resources/avatar/Build";
+    var loaderUrl = buildUrl + "/BuildEstudiantes.loader.js";
+    
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/BuildEstudiantes.data",
+      frameworkUrl: buildUrl + "/BuildEstudiantes.framework.js",
+      codeUrl: buildUrl + "/BuildEstudiantes.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "AsistenteIA",
+      productVersion: "0.1.0",
+      showBanner: unityShowBanner,
+    };
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      var meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+      document.head.appendChild(meta);
+      document.querySelector("#unity-container").className = "unity-mobile";
+      canvas.className = "unity-mobile";
+    } else {
+      canvas.style.width = "100%"; // 400px
+      canvas.style.height = "100%"; // 600px
+    }
+
+    document.querySelector("#unity-loading-bar").style.display = "block";
+
+    var unityInstance = null;
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config, (progress) => {
+        document.querySelector("#unity-progress-bar-full").style.width = (100 * progress) + "%";
+      }).then((instance) => {
+        unityInstance = instance;
+        document.querySelector("#unity-loading-bar").style.display = "none";
+        // document.querySelector("#unity-fullscreen-button").onclick = () => unityInstance.SetFullscreen(1);
+      }).catch((message) => { alert(message); });
+    };
+    document.body.appendChild(script);
+
+    // Tu función ya existente:
+    function enviarBase64(base64Opt, talking) {
+      
+      const base64 = (typeof base64Opt === "string" && base64Opt.length) 
+        ? base64Opt 
+        : "";
+
+      if (!base64) {
+        alert("Ingresa un Base64 válido o espera datos del stream");
+        return;
+      }
+
+      if (unityInstance) {
+        
+        let content = talking; // Por defecto, enviamos 'true' o 'false'
+        let webAudio = 'WebAudioStop'
+        console.log(`[enviarBase64] Talking: ${talking}, base64 length: ${base64.length}`);
+        if(talking === 'true'){
+          webAudio = 'WebAudioLoader'
+          content = base64ToBlobUrl(base64, "audio/wav"); // o "audio/mpeg" si es MP3
+        }
+
+        // console.log(`[enviarBase64] Enviando a Unity WebAudioLoader -> ${url}`);
+        unityInstance.SendMessage("SpeechPlayerServerWebGL", webAudio, content);
+      } else {
+        // console.warn("[enviarBase64] Unity aún no está listo");
+      }
+
+    }
+
+    function base64ToBlobUrl(base64, mime = "audio/wav") {
+      // Limpia encabezados tipo "data:audio/wav;base64,..."
+      const cleaned = base64.replace(/^data:.*;base64,/, "").replace(/\s/g, "");
+      // console.log(`[base64ToBlobUrl] Longitud base64 limpia = ${cleaned.length} chars`);
+
+      // Decodifica en trozos para no reventar el stack de JS
+      const sliceSize = 1024 * 1024; // 1 MB
+      const byteChars = atob(cleaned);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let offset = 0; offset < byteChars.length; offset += sliceSize) {
+        const end = Math.min(offset + sliceSize, byteChars.length);
+        for (let i = offset; i < end; i++) bytes[i] = byteChars.charCodeAt(i);
+      }
+
+      const blob = new Blob([bytes], { type: mime });
+      const url = URL.createObjectURL(blob);
+      // console.log(`[base64ToBlobUrl] Blob creado: tamaño=${blob.size} bytes, url=${url}`);
+      return url;
+    }
+
+    window.addEventListener("message", (event) => {
+      // console.log("Mensaje recibido en avatar:", event.data);
+
+      if (event.data?.action === "base64") {
+        if (typeof event.data.data === "string" && event.data.data.length > 0) {
+          enviarBase64(event.data.data, event.data.talking);
+        } else {
+          // console.warn("Base64 vacío o no es string:", event.data.data);
+        }
+      }
+    });
+
+  </script>
+</body>
+</html>

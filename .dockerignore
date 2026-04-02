@@ -1,0 +1,45 @@
+# Archivos y carpetas de control de versiones
+.git
+.gitignore
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+.eggs/
+
+# Virtualenvs locales
+.venv/
+venv/
+env/
+
+# Node / PM2
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Archivos de caché y compilación
+*.log
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+*.bak
+*.cache/
+*.pytest_cache/
+
+# Datos generados que no deben ir dentro del contenedor
+storage/
+.local/
+.pm2/
+
+# Archivos de IDE
+.vscode/
+.idea/
+
+# Docker
+Dockerfile
+docker-compose.yml

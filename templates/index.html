@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head><base href=""/>
+		<title>Asistente Médico</title>
+		<meta charset="utf-8" />
+		<meta name="description" content="Saul HTML Free - Bootstrap 5 HTML Multipurpose Admin Dashboard Theme" />
+		<meta name="keywords" content="Saul, bootstrap, bootstrap 5, dmin themes, free admin themes, bootstrap admin, bootstrap dashboard" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="shortcut icon" type="image/ico" href="../../static/img/favicon.ico"/>
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="Saul HTML Free - Bootstrap 5 HTML Multipurpose Admin Dashboard Theme" />
+		<meta property="og:url" content="https://keenthemes.com/products/saul-html-pro" />
+		<meta property="og:site_name" content="Keenthemes | Saul HTML Free" />
+		<link rel="canonical" href="https://preview.keenthemes.com/saul-html-free" />
+		<!-- <link rel="shortcut icon" href="assets/media/logos/favicon.ico" /> -->
+		<link rel="shortcut icon" href="{{ url_for('serve_assets', filename='media/logos/favicon.ico') }}" />
+		
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
+		
+		<!-- <link href="assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" /> -->
+		<link href="{{ url_for('serve_assets', filename='plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
+		<!-- <link href="assets/css/style.bundle.css" rel="stylesheet" type="text/css" /> -->
+		<link href="{{ url_for('serve_assets', filename='css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
+		<style>
+			/* @media (min-width: 768px) {
+				.fixed-card {
+					position: fixed;   /* Posición fija 
+					z-index: 1000;     /* Asegura que esté por encima de otros elementos 
+					width: 32%;
+				}
+			} */
+			 @media (min-width: 768px){
+				/* .fixed-card {
+					position: fixed;   /* Posición fija 
+					z-index: 1000;     /* Asegura que esté por encima de otros elementos 
+					width: 32%;
+				} */
+				.fixed-card {
+					position: static;
+					width: 100%;
+				}
+			 }
+			 
+			/* En pantallas menores a 768px (móviles) se comporta de forma normal */
+			/* @media (orientation: portrait) {
+				.fixed-card {
+					position: static;
+					width: 100%;
+				}
+			} */
+
+			.contenedor-typing{
+				position: relative;
+				height: 0;
+				width: 84%;
+				transition: height .5s ease-in-out;
+			}
+
+			.ct-appear{
+				height: 170px;
+			}
+
+			.filtro-typing{
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: linear-gradient(0deg, rgb(237 237 237) 0%, rgba(237, 237, 237, 0) 40%, rgba(237, 237, 237, 0) 60%, rgb(237 237 237) 100%);
+				pointer-events: none;
+				z-index: 10;
+				border-radius: 23px;
+			}
+
+			.texto-type{
+				position: absolute;
+				/*display: flex;
+				/*flex-direction: column;
+				justify-content: center;
+				align-items: center;*/
+				height: 100%;
+				width: 100%;
+				top: 0;
+				left: 0;
+				overflow-y: auto;
+				text-align:center;
+				font-size:17px;
+				font-style: italic;
+				color: #343434;
+				font-family: Arial, sans-serif;
+			}
+
+			.texto-type::-webkit-scrollbar{
+				display: none;
+			}
+
+			#typeContenido{
+				position: relative;
+				bottom: 0;
+				left: 0;
+				display: flex;
+				min-height: 100%;
+				min-width: 100%;
+				padding: 25px 0;
+				align-items: center;
+				justify-content: center;
+				padding: 0 20px;
+				/* : center; */
+			}
+			
+			#audioMotion > canvas{
+				max-width: 100%;
+				width: 200px;
+    			height: 50px;
+			}
+			
+			.chat-container {
+				height: 75vh;
+				overflow-y: auto;
+				padding: 1rem;
+				background-color: #f8f9fa;
+				border: 1px solid #dee2e6;
+				border-radius: .5rem;
+			}
+			.message {
+				max-width: 75%;
+				padding: .5rem 1rem;
+				border-radius: 1rem;
+				margin-bottom: .75rem;
+				position: relative;
+				word-wrap: break-word;
+			}
+			.incoming {
+				background-color: #fff;
+				border: 1px solid #dee2e6;
+				margin-right: auto;
+			}
+			.outgoing {
+				background-color: #0d6efd;
+				color: #fff;
+				margin-left: auto;
+			}
+			.reaction-btn {
+				font-size: .9rem;
+				line-height: 1;
+				padding: .2rem .5rem;
+				margin-right: .3rem;
+			}
+			.reactions {
+				margin-top: .5rem;
+				text-align: right;
+			}
+		</style>
+	</head>
+
+	<body id="kt_app_body" data-kt-app-header-fixed="true" data-kt-app-header-fixed-mobile="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-hoverable="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-toolbar-enabled="true" data-kt-app-aside-enabled="true" data-kt-app-aside-fixed="true" data-kt-app-aside-push-toolbar="true" data-kt-app-aside-push-footer="true" class="app-default">
+
+		<script>var defaultThemeMode = "light"; var themeMode; if ( document.documentElement ) { if ( document.documentElement.hasAttribute("data-bs-theme-mode")) { themeMode = document.documentElement.getAttribute("data-bs-theme-mode"); } else { if ( localStorage.getItem("data-bs-theme") !== null ) { themeMode = localStorage.getItem("data-bs-theme"); } else { themeMode = defaultThemeMode; } } if (themeMode === "system") { themeMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } document.documentElement.setAttribute("data-bs-theme", themeMode); }</script>
+
+		<div class="d-flex flex-column flex-root app-root" id="kt_app_root">
+			<div class="app-main flex-column flex-row-fluid m-5" id="kt_app_main">
+				<div class="row">
+					<!--<div class="col-md-12 col-lg-4">-->
+					<div class="col-md-12">
+						<div class="fixed-card">
+							<div class="controles flex-column align-items-center position-absolute w-100" id="controles" style="z-index: 1;bottom: 5%;display: flex;">
+								<div class="contenedor-typing" id="contenedor-typing" style="position: relative !important;bottom: 20px !important;background-color: rgba(255,255,255,0.7);border-radius: 23px;/* opacity: 0.5; */">
+									<div class="filtro-typing ft-2d"></div>
+									<div class="texto-type">
+										<p id="typeContenido"></p>
+									</div>
+								</div>
+								<div id="audioMotion"></div>
+								<div>
+									<a id="btnMicrofono" href="#" class="asistente-btn btn btn-lg btn-icon btn-light btn-active-secondary me-5 rounded-circle">
+										<i id="btnMicUp" class="bi bi-mic-fill fs-2 text-gray-800" hidden="true"></i>
+										<i id="btnMicStop" class="bi bi-mic-mute-fill fs-2 text-danger"></i>
+									</a>
+									<!--<a href="#" id="btnIniciarRecorrido" class="btn btn-sm btn-icon btn-light me-5 rounded-circle p-2">
+										<div class="spinner-border spinner-iniciar-recorrido text-primary d-none position-absolute" role="status" style="display: none;">
+											<span class="sr-only">Loading...</span>
+										</div>
+										<i id="btnMicInit" class="bi bi-info-circle fs-2 text-info"></i>
+									</a>-->
+									<a href="#" id="btnRecargarPagina" class="btn btn-sm btn-icon btn-light me-5 rounded-circle p-2">
+										<div class="spinner-border spinner-iniciar-recorrido text-primary d-none position-absolute" role="status" style="display: none;">
+											<span class="sr-only">Loading...</span>
+										</div>
+										<i id="btnMicInit" class="bi bi-arrow-clockwise fs-2 text-info"></i>
+									</a>
+									<!--<a href="#" id="btnVerChat" class="btn btn-sm btn-icon btn-light me-5 rounded-circle p-2">
+										<div class="spinner-border spinner-ver-chat text-primary d-none position-absolute" role="status" style="display: none;">
+											<span class="sr-only">Loading...</span>
+										</div>
+										<i class="bi bi-chat-dots fs-2 text-info"></i>
+									</a>-->
+									<a href="#" id="btnVerForm" class="btn btn-sm btn-icon btn-light me-5 rounded-circle p-2">
+										<div class="spinner-border spinner-ver-chat text-primary d-none position-absolute" role="status" style="display: none;">
+											<span class="sr-only">Loading...</span>
+										</div>
+										<i class="bi bi-clipboard2 fs-2 text-info"></i>
+									</a>
+									<!-- <button id="btnCancelar">Cancelar</button> -->
+									<div>
+										<audio id="assistantAudioPlayer" hidden autoplay></audio>
+									</div>
+								</div>
+								<div hidden>
+									<input type="text" name="chat_text" id="chat_text" style="width: 100%; display: block;">
+									<button id="enviar_text">></button>
+								</div>
+							</div>
+							<div class="card card-avatar">
+								<div class="h-100">
+									<iframe src="/avatar" class="d-flex rounded w-100 justify-content-center align-items-center" style="height: 95vh;">
+									</iframe>
+								</div>
+							</div>
+							<div class="card card-chat" style="display: none;">
+								<div class="card-header d-flex align-items-center">
+									<div>
+										<h3>Historial del entrenamiento</h3>
+									</div>
+									<div class="btn btn-sm btn-icon btn-active-light-dark" id="btnCerrarChat">
+										<i class="ki-duotone ki-cross">
+											<i class="path1 fs-2x"></i>
+											<i class="path2 fs-2x"></i>
+										</i>
+									</div>
+								</div>
+								<div class="container py-4 d-flex flex-column">
+									<div id="chat" class="chat-container flex-grow-1"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!--<div class="col-md-12 col-lg-8 d-flex flex-column gap-5">
+						
+						
+						<div class="card card-flush">
+							<div class="card-header app-toolbar py-5">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h2 class="fw-bold mb-2">Transcripción</h2>
+									<!--<span class="fs-6 fw-semibold text-gray-500">Consumo actual de energía</span>
+								</div>
+							</div>
+							<div class="card-body d-flex justify-content-between flex-column pb-1 px-0">
+								<div class="data-recomendaciones form-floating ps-6 pe-6" id="recomendaciones" style="height: 200px;width: 100%;overflow-y: auto;">
+								</div>
+							</div>
+						</div>
+					</div>-->
+				</div>
+				
+				<!--<div id="kt_app_footer" class="app-footer align-items-center justify-content-center justify-content-md-between flex-column flex-md-row py-3">
+
+					<div class="text-dark order-2 order-md-1">
+						<span class="text-muted fw-semibold me-1">2023&copy;</span>
+						<a href="https://keenthemes.com" target="_blank" class="text-gray-800 text-hover-primary">Keenthemes</a>
+					</div>
+
+					<ul class="menu menu-gray-600 menu-hover-primary fw-semibold order-1">
+						<li class="menu-item">
+							<a href="https://keenthemes.com" target="_blank" class="menu-link px-2">About</a>
+						</li>
+						<li class="menu-item">
+							<a href="https://devs.keenthemes.com" target="_blank" class="menu-link px-2">Support</a>
+						</li>
+						<li class="menu-item">
+							<a href="https://keenthemes.com/products/saul-html-pro" target="_blank" class="menu-link px-2">Purchase</a>
+						</li>
+					</ul>
+
+				</div>-->
+			</div>
+		</div>
+		
+		<div id="kt_scrolltop" class="scrolltop" data-kt-scrolltop="true">
+			<i class="ki-duotone ki-arrow-up">
+				<span class="path1"></span>
+				<span class="path2"></span>
+			</i>
+		</div>
+		
+		<script>var hostUrl = "assets/";</script>
+
+		<script src="{{ url_for('serve_assets', filename='plugins/global/plugins.bundle.js') }}"></script>
+		<script src="{{ url_for('serve_assets', filename='js/scripts.bundle.js') }}"></script>
+		<script src="{{ url_for('serve_assets', filename='js/widgets.bundle.js') }}"></script>
+		<script src="../static/js/global.js"></script>
+    	<script type="module" src="../static/js/index.js"></script>
+		<script>
+			// Cargar la imagen del grafo cuando la página se carga completamente
+			function cargarGrafo() {
+				fetch('/getgraph')
+					.then(response => response.blob())
+					.then(blob => {
+						const img = document.getElementById('grafo-image');
+						const loading = document.getElementById('grafo-loading');
+						
+						// Crear URL de objeto para la imagen
+						const imageUrl = URL.createObjectURL(blob);
+						img.src = imageUrl;
+						
+						// Mostrar la imagen y ocultar el spinner de carga
+						img.style.display = 'block';
+						loading.style.display = 'none';
+					})
+					.catch(error => {
+						console.error('Error al cargar el grafo:', error);
+						const loading = document.getElementById('grafo-loading');
+						loading.innerHTML = '<p class="text-danger">Error al cargar el diagrama del grafo</p>';
+					});
+			}
+			
+			// Ejecutar cuando el documento esté completamente cargado
+			document.addEventListener('DOMContentLoaded', function() {
+				cargarGrafo();
+			});
+		</script>
+		
+	</body>
+
+	<div class="modal fade" id="modal_autorizacion" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">AUTORIZACIÓN DE USO DE DATOS PARA INVESTIGACIONES</h5>
+                </div>
+                <div class="modal-body text-justify">
+                    <p><b>Por favor, antes de continuar es necesario que lea y acepte lo siguiente:</b></p>
+                    <p style="font-size: 10pt;">
+                        De conformidad con lo dispuesto en la Ley Orgánica de Protección de Datos Personales vigente 
+                        en la República del Ecuador, acepto el contenido del presente formulario electrónico y doy 
+                        mi consentimiento explícito a la Universidad Técnica de Manabí (UTM) para el tratamiento de 
+                        mis datos personales y datos sensibles consignados en el mismo, quien actuará como el 
+                        responsable del tratamiento de mis datos personales y sensibles, de acuerdo a lo establecido 
+                        en la norma antes citada. Con la suscripción del presente documento, consiento y autorizo a 
+                        la Universidad Técnica de Manabí (UTM) mis datos personales y sensibles <b>sean utilizados 
+                        únicamente con fines investigativos de la UTM, y los mismo no podrán ser cedidos y tratados 
+                        por terceros, ni publicados.</b> Declaro que toda la información consignada es verídica y exacta, 
+                        especialmente en la calidad en la que lo manifiesto en el presente documento. 
+                        También se me ha notificado que la información respecto al tratamiento, finalidad, 
+                        conservación, ejercicio de derechos determinados en la Ley Orgánica de Protección de Datos 
+                        Personales. El consentimiento explícito para el tratamiento de datos personales y sensibles 
+                        otorgado por el presente instrumento se realiza de manera voluntaria, previa, explícita, 
+                        informada e inequívoca.
+                    </p>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" id="rechazar_auto" class="btn btn-light">Rechazar</button>
+                    <button type="button" id="aceptar_autor" class="btn btn-primary">Aceptar</button>
+                </div>
+              </div>
+        </div>
+    </div>
+	<div class="modal fade" id="modalGrafo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">DIAGRAMA DEL FLUJO DEL GRAFO</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="grafo-image" src="" alt="Diagrama del Grafo" style="max-width: 100%; height: auto; display: none;">
+                    <div id="grafo-loading" class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p>Cargando diagrama del grafo...</p>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+              </div>
+        </div>
+    </div>
+	<div class="modal fade" id="modalRevision" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">MODAL FORMULARIO</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>	
+                </div>
+                <div class="modal-body">
+					<div class="row">
+						<div class="col-12 d-flex flex-column gap-5">
+						<div class="card px-0 py-5">
+							<h1 class="text-center" id="offcanvas_encabezado_landscape">Ficha No. <button id="n_ficha" class="btn btn-outline-secondary text-danger fs-1 fw-bold py-0 px-1" data-bs-placement="bottom" data-bs-title="Cambiar número de ficha" data-bs-toggle="tooltip" type="button">1</button> <input class="form-control form-control-sm fs-1" id="text_nficha" type="text" style="display: none;width: 60px;"> de Intervención y Acogida<br>Trabajo Social</h2>
+						</div>
+						<div class="card px-0">
+							<div class="card-header app-toolbar py-3">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h3 class="fw-bold mb-1">Ficha de Datos Iniciales</h3>
+								
+								</div>
+								
+							</div>
+							
+							<ul class="list-group list-group-flush">
+								<li class="list-group-item">
+									<div class="row py-1">
+										<div class="form-group col-4">
+											<label for="provincia"><b class="text-secondary-emphasis">Provincia:</b>
+</label>
+											<input type="text" class="form-control form-control-sm" id="provincia">
+										</div>
+										<div class="form-group col-4">
+											<label for="ciudad"><b class="text-secondary-emphasis">Ciudad:</b></label>
+											<input type="text" class="form-control form-control-sm" id="ciudad">
+										</div>
+										<div class="form-group col-4">
+											<label for="parroquia"><b class="text-secondary-emphasis">Parroquia:</b></label>
+											<input type="text" class="form-control form-control-sm" id="parroquia">
+										</div>
+									</div>
+								</li>
+								<li class="list-group-item">
+									<div class="row py-1">
+										<div class="form-group col-3">
+											<label for="es_estudiante"><b class="text-secondary-emphasis">Es estudiante:</b></label>
+											<div class="form-check form-check-sm pt-1">
+												<input class="form-check-input" type="radio" name="es_estudiante" id="estudiante_si">
+												<label class="form-check-label" for="estudiante_si">
+													SI
+												</label>
+											</div>
+											<div class="form-check form-check-sm pt-1">
+												<input class="form-check-input" type="radio" name="es_estudiante" id="estudiante_no">
+												<label class="form-check-label" for="estudiante_no">
+													NO
+												</label>
+											</div>
+										</div>
+										<div class="form-group col-4">
+											<label for="institucion"><b class="text-secondary-emphasis">Mencione la institucion:</b></label>
+											<div class="form-check form-check-sm pt-1">
+												<input class="form-check-input form-check-input-sm" type="radio" name="institucion" id="institucion_utm">
+												<label class="form-check-label" for="institucion_utm">
+													UTM
+												</label>
+											</div>
+											<div class="form-check form-check-sm pt-1">
+												<input class="form-check-input form-check-input-sm" type="radio" name="institucion" id="institucion_otro">
+												<label class="form-check-label" for="institucion_otro">
+													OTRO
+												</label>
+											</div>
+											<div class="form-floating" id="institucion_div" style="display:none;">
+												<input class="form-control" placeholder="Especifique institucion" id="text_institucion">
+												<label for="text_institucion">Especifique:</label>
+											</div>
+										</div>
+										<div class="col-5" id="datos_institucion_text">
+											<div class="input-group input-group-sm mb-1">
+												<span class="input-group-text fw-bold">Facultad</span>
+												<input type="text" class="form-control form-control-sm" id="facultad" aria-label="Sizing example input" aria-describedby="facultad">
+											</div>
+											<div class="input-group input-group-sm mb-1">
+												<span class="input-group-text fw-bold">Carrera</span>
+												<input type="text" class="form-control" id="carrera" aria-label="Sizing example input" aria-describedby="carrera">
+											</div>
+											<div class="input-group input-group-sm mb-1">
+												<label class="input-group-text fw-bold" for="modalidad_estudio">Modalidad</label>
+												<select class="form-select" id="modalidad_estudio">
+													<option selected="" disabled="">Seleccione...</option>
+													<option value="presencial">PRESENCIAL</option>
+													<option value="hibrida">HÍBRIDA</option>
+													<option value="en_linea">EN LÍNEA</option>
+												</select>
+											</div>
+											<div class="input-group input-group-sm mb-1">
+												<span class="input-group-text fw-bold">Nivel</span>
+												<input type="text" id="nivel" class="form-control" aria-label="Sizing example input" aria-describedby="nivel">
+											</div>
+										</div>
+										<div class="col-5" id="datos_institucion_select" style="display:none;">
+											<div class="input-group input-group-sm mb-1">
+												<label class="input-group-text fw-bold" for="facultad_select">Facultad</label>
+												<select class="form-select" id="facultad_select">
+													<option selected="" disabled="">Seleccione...</option>
+													<option value="ciencias_de_la_salud">Ciencias de la Salud</option>
+													<option value="ciencias_informaticas">Ciencias Informaticas</option>
+													<option value="ciencias_humanisticas">Ciencias Humanisticas</option>
+												</select>
+											</div>
+											<div class="input-group input-group-sm mb-1">
+												<label class="input-group-text fw-bold" for="carrera_select">Carrera</label>
+												<select class="form-select" id="carrera_select">
+													<option selected="" disabled="">Seleccione...</option>
+													<option value="medicina">Medicina</option>
+													<option value="biologia">Biologia</option>
+													<option value="psicologia">Psicologia</option>
+												</select>
+											</div>
+											<div class="input-group input-group-sm mb-1">
+												<label class="input-group-text fw-bold" for="modalidad_estudio_select">Modalidad</label>
+												<select class="form-select" id="modalidad_estudio_select">
+													<option selected="" disabled="">Seleccione...</option>
+													<option value="presencial">PRESENCIAL</option>
+													<option value="hibrida">HÍBRIDA</option>
+													<option value="en_linea">EN LÍNEA</option>
+												</select>
+											</div>
+											<div class="input-group input-group-sm mb-1">
+												<label class="input-group-text fw-bold" for="nivel_select">Nivel</label>
+												<select class="form-select" id="nivel_select">
+													<option selected="" disabled="">Seleccione...</option>
+													<option value="nivel1">Nivel 1</option>
+													<option value="nivel2">Nivel 2</option>
+													<option value="nivel3">Nivel 3</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<!-- <div class="card-body">
+								<div class="row">
+									<div class="form-group col-4">
+										<label for="provincia">Provincia:</label>
+										<input type="text" class="form-control" id="provincia">
+									</div>
+									<div class="form-group col-4">
+										<label for="ciudad">Ciudad:</label>
+										<input type="text" class="form-control" id="ciudad">
+									</div>
+									<div class="form-group col-4">
+										<label for="parroquia">Parroquia:</label>
+										<input type="text" class="form-control" id="parroquia">
+									</div>
+								</div>
+								<div class="row mt-3">
+									<div class="form-group col-3">
+										<label for="es_estudiante">Es estudiante:</label>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="es_estudiante" id="estudiante_si">
+											<label class="form-check-label" for="estudiante_si">
+												SI
+											</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="es_estudiante" id="estudiante_no">
+											<label class="form-check-label" for="estudiante_no">
+												NO
+											</label>
+										</div>
+									</div>
+									<div class="form-group col-4">
+										<label for="institucion">Mencione la institucion:</label>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="institucion" id="institucion_utm">
+											<label class="form-check-label" for="institucion_utm">
+												UTM
+											</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="institucion" id="institucion_otro">
+											<label class="form-check-label" for="institucion_otro">
+												OTRO
+											</label>
+										</div>
+										<div class="form-floating">
+											<input class="form-control" placeholder="Especifique institucion" id="text_institucion"></input>
+											<label for="text_institucion">Especifique:</label>
+										</div>
+									</div>
+									<div class="col-5">
+										<div class="input-group mb-1">
+											<span class="input-group-text" id="facultad">Facultad</span>
+											<input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="facultad">
+										</div>
+										<div class="input-group mb-1">
+											<span class="input-group-text" id="carrera">Carrera</span>
+											<input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="carrera">
+										</div>
+										<div class="input-group mb-1">
+											<label class="input-group-text" for="modalidad_estudio">Modalidad</label>
+											<select class="form-select" id="modalidad_estudio">
+												<option selected disabled>Seleccione...</option>
+												<option value="mod_presencial">PRESENCIAL</option>
+												<option value="mod_hibrida">HIBRIDA</option>
+												<option value="mod_en_linea">EN LINEA</option>
+											</select>
+										</div>
+										<div class="input-group mb-1">
+											<span class="input-group-text" id="nivel">Nivel</span>
+											<input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="nivel">
+										</div>
+									</div>
+								</div>
+							</div> -->
+						</div>
+						
+						<div class="card px-0">
+							<div class="card-header app-toolbar py-3">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h4 class="fw-bold mb-1">1. Datos de Identificación del Usuario</h4>
+								
+								</div>
+								
+							</div>
+							
+							<ul class="list-group list-group-flush">
+								<li class="list-group-item">
+									<div class="py-1">
+										<div class="row mb-2">
+											<div class="input-group input-group-sm">
+												<span class="input-group-text">Nombres:</span>
+												<input type="text" aria-label="nombres" id="nombres" class="form-control">
+												<span class="input-group-text">Apellidos:</span>
+												<input type="text" aria-label="apellidos" id="apellidos" class="form-control">
+											</div>
+										</div>
+										<div class="row mb-2">
+											<div class="col-12">
+												<div class="input-group input-group-sm">
+													<span class="input-group-text">Cédula:</span>
+													<input type="text" aria-label="cedula" id="cedula" class="form-control">
+													<span class="input-group-text">Celular:</span>
+													<input type="text" aria-label="celular" id="celular" class="form-control">
+													<span class="input-group-text">Correo:</span>
+													<input type="text" aria-label="correo" id="correo" class="form-control">
+													<span class="input-group-text" id="dominio_utm" style="display: none;">@utm.edu.ec</span>
+													<span class="input-group-text" id="dominio_otro" style="display: none;">@</span>
+													<select class="form-select" id="correos_dominios" style="display: none;">
+														<option selected="" disabled="">Seleccione...</option>
+														<option value="correo_gmail">gmail.com</option>
+														<option value="correo_outlook">outlook.com</option>
+														<option value="correo_yahoo">yahoo.com</option>
+													</select>
+												</div>
+											</div>
+											
+										</div>
+										<div class="row mb-2">
+											<div class="input-group input-group-sm">
+												<span class="input-group-text">Edad:</span>
+												<input type="text" aria-label="edad" id="edad" class="form-control">
+												<span class="input-group-text">Fecha de nacimiento:</span>
+												<input type="date" aria-label="fecha_nacimiento" id="fecha_nacimiento" class="form-control">
+												<span class="input-group-text">Nacionalidad:</span>
+												<input type="text" aria-label="nacionalidad" id="nacionalidad" class="form-control">
+											</div>
+										</div>
+										
+										<div class="row row-cols-auto ms-1 mb-2 d-flex align-items-center">
+											<div class="col-auto">
+												<label for="sexo"><b class="text-secondary-emphasis">Sexo:</b></label>
+											</div>
+											<div class="col-auto">
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="sexo" id="sexo_femenino" value="femenino">
+													<label class="form-check-label" for="sexo_femenino">Femenino</label>
+												</div>
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="sexo" id="sexo_masculino" value="masculino">
+													<label class="form-check-label" for="sexo_masculino">Masculino</label>
+												</div>
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="sexo" id="sexo_otro" value="otro">
+													<label class="form-check-label" for="sexo_otro">Otro:</label>
+													<!-- <input type="text" class="form-control" id="inputEmail3"> -->
+												</div>
+											</div>
+											<div class="col-5" id="sexo_div" style="display:none;">
+												<input type="text" class="form-control form-control-sm" id="text_sexo_otro" placeholder="Especifique sexo">
+											</div>
+										</div>
+										<div class="row mb-2">
+											<div class="input-group input-group-sm">
+												<span class="input-group-text">Identidad de género (opcional):</span>
+												<input type="text" aria-label="identidad_genero" id="identidad_genero" class="form-control">
+											</div>
+										</div>
+										<div class="row mb-2">
+											<div class="input-group input-group-sm">
+												<span class="input-group-text">Dirección domicilio:</span>
+												<input type="text" aria-label="direccion_domicilio" id="direccion_domicilio" class="form-control">
+											</div>
+										</div>
+										<div class="row mb-2">
+											<div class="input-group input-group-sm">
+												<span class="input-group-text">Lugar de residencia:</span>
+												<input type="text" aria-label="lugar_residencia" id="lugar_residencia" class="form-control" placeholder="En caso de residir en otra ciudad o provincia, especifique aqui">
+											</div>
+										</div>
+										<div class="row mb-2">
+											<div class="input-group input-group-sm">
+												<span class="input-group-text">Nombre y contacto de referencia:</span>
+												<input type="text" aria-label="contacto_referencia" id="contacto_referencia" class="form-control">
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+						
+						<div class="card px-0">
+							<div class="card-header app-toolbar py-3">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h4 class="fw-bold mb-1">2. Área de Consulta</h4>
+								
+								</div>
+								
+							</div>
+							<ul class="list-group list-group-flush">
+								<li class="list-group-item">
+									<div class="py-1">
+										<div class="form-group">
+											<div class="row mb-1 d-flex align-items-center">
+												<div class="col-4 py-1">
+													<div class="form-check form-check-sm">
+														<input class="form-check-input" type="radio" name="area_consulta" id="ginecologia">
+														<label class="form-check-label" for="ginecologia">
+															GINECOLOGÍA
+														</label>
+													</div>
+												</div>
+												<div class="col-4 py-1">
+													<div class="form-check form-check-sm">
+														<input class="form-check-input" type="radio" name="area_consulta" id="asesoria_juridica">
+														<label class="form-check-label" for="asesoria_juridica">
+															ASESORÍA JURÍDICA
+														</label>
+													</div>
+												</div>
+												<div class="col-4 py-1">
+													<div class="form-check form-check-sm">
+														<input class="form-check-input" type="radio" name="area_consulta" id="trabajo_social">
+														<label class="form-check-label" for="trabajo_social">
+															TRABAJO SOCIAL
+														</label>
+													</div>
+												</div>
+												<div class="col-4 py-1">
+													<div class="form-check form-check-sm">
+														<input class="form-check-input" type="radio" name="area_consulta" id="psicologia">
+														<label class="form-check-label" for="psicologia">
+															PSICOLOGÍA
+														</label>
+													</div>
+												</div>
+												<div class="col-4 py-1">
+													<div class="form-check form-check-sm">
+														<input class="form-check-input" type="radio" name="area_consulta" id="laboratorio_clinico">
+														<label class="form-check-label" for="laboratorio_clinico">
+															LABORATORIO CLÍNICO
+														</label>
+													</div>
+												</div>
+												<!-- <div class="col-8">
+													<div class="row row-cols-auto d-flex align-items-center">
+														<div class="col-auto">
+															<div class="form-check form-check-sm">
+																<input class="form-check-input" type="radio" name="area_consulta" id="laboratorio_clinico">
+																<label class="form-check-label" for="laboratorio_clinico">
+																	LABORATORIO CLÍNICO
+																</label>
+															</div>
+														</div>
+														<div class="col-auto">
+															<select class="form-select form-select-sm" aria-label="Default select example" id="area_consulta_select">
+																<option value="" selected disabled>Especifique</option>
+																<option value="vih">VIH</option>
+																<option value="sifilis">SIFILIS</option>
+																<option value="hepatitis_b">HEPATITIS B</option>
+																<option value="hepatitis_c">HEPATITIS C</option>
+																<option value="p_embarazo">P. EMBARAZO</option>
+															</select>
+														</div>
+													</div>
+												</div> -->
+												<div class="col-4 py-1" id="area_consulta_div" style="display:none;">
+													<select class="form-select form-select-sm" aria-label="Default select example" id="area_consulta_select">
+														<option value="" selected disabled>Especifique</option>
+														<option value="vih">VIH</option>
+														<option value="sifilis">SÍFILIS</option>
+														<option value="hepatitis_b">HEPATITIS B</option>
+														<option value="hepatitis_c">HEPATITIS C</option>
+														<option value="p_embarazo">P. EMBARAZO</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+						
+						<div class="card px-0">
+							<div class="card-header app-toolbar py-3">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h4 class="fw-bold mb-1">3. Datos Personales</h4>
+								
+								</div>
+								
+							</div>
+							<ul class="list-group list-group-flush">
+								<li class="list-group-item">
+									<div class="row py-1">
+										<div class="col-12">
+											<label for="atencion_inmediata"> <b class="text-secondary-emphasis">El usuario requiere atención médica inmediata:</b></label>
+										</div>
+										<div class="col-12 my-2">
+											<div class="form-group">
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="atencion_inmediata" id="inmediata_si" value="1">
+													<label class="form-check-label" for="inmediata_si">SÍ</label>
+												</div>
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="atencion_inmediata" id="inmediata_no" value="0">
+													<label class="form-check-label" for="inmediata_no">NO</label>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row row-cols-auto py-1 d-flex align-items-center">
+										<div class="col-auto">
+											<div class="form-group">
+												<label for="embarazada"><b class="text-secondary-emphasis">Se encuentra usted embarazada:</b></label>
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="embarazada" id="embarazada_si" value="1">
+													<label class="form-check-label" for="embarazada_si">SÍ</label>
+												</div>
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="embarazada" id="embarazada_no" value="0">
+													<label class="form-check-label" for="embarazada_no">NO</label>
+												</div>
+											</div>
+										</div>
+										<div class="col-3" id="embarazada_div" style="display:none;">
+											<div class="input-group input-group-sm">
+												<input type="text" aria-label="meses_embarazo" id="meses_embarazo" class="form-control">
+												<span class="input-group-text">Meses</span>
+											</div>
+										</div>
+									</div>
+								</li>
+								<li class="list-group-item">
+									<div class="row py-1">
+										<div class="col-12">
+											<div class="form-group">
+												<label for="discapacidad"><b class="text-secondary-emphasis">Presenta alguna condición o discapacidad:</b></label>
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="discapacidad" id="discapacidad_si" value="1">
+													<label class="form-check-label" for="discapacidad_si">SÍ</label>
+												</div>
+												<div class="form-check form-check-sm form-check-inline">
+													<input class="form-check-input" type="radio" name="discapacidad" id="discapacidad_no" value="0">
+													<label class="form-check-label" for="discapacidad_no">NO</label>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div id="discapacidad_div" style="display:none;">
+										<div class="row py-1">
+											<div class="col-12">
+												
+												<!-- <label for="textarea_discapacidad" class="form-label">Describa brevemente la condicion o discapacidad que usted presenta:</label>
+												<textarea class="form-control" id="textarea_discapacidad" rows="2"></textarea> -->
+												<div class="form-floating">
+													<textarea class="form-control" placeholder="Leave a comment here" id="textarea_discapacidad"></textarea>
+													<label for="textarea_discapacidad">Describa brevemente la condición o discapacidad que usted presenta:</label>
+												</div>
+											</div>
+										</div>
+										<div class="row row-cols-auto py-1 d-flex align-items-center">
+											<div class="col-12">
+												<label for="carnet_discapacidad">Carnet de discapacidad:</label>
+											</div>
+											<div class="col-auto">
+												<div class="form-group">
+													<div class="form-check form-check-sm form-check-inline">
+														<input class="form-check-input" type="radio" name="carnet_discapacidad" id="carnet_discapacidad_si" value="1">
+														<label class="form-check-label" for="carnet_discapacidad_si">SÍ</label>
+													</div>
+													<div class="form-check form-check-sm form-check-inline">
+														<input class="form-check-input" type="radio" name="carnet_discapacidad" id="carnet_discapacidad_no" value="0">
+														<label class="form-check-label" for="carnet_discapacidad_no">NO</label>
+													</div>
+												</div>
+											</div>
+											<div class="col-6">
+												<div class="input-group input-group-sm">
+													<input type="text" aria-label="porc_discapacidad" id="porc_discapacidad" class="form-control">
+													<span class="input-group-text">Porcentaje de discapacidad</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</li>
+								<li class="list-group-item">
+									
+									<div class="form-group">
+										<div class="row row-cols-auto mb-1 py-1 d-flex align-items-center">
+											<div class="col-12 mb-2">
+												<label for="estado_civil"><b class="text-secondary-emphasis">Estado civil o tipo de relación de pareja:</b></label>
+											</div>
+											<div class="col-auto py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="estado_civil" id="casado">
+													<label class="form-check-label" for="casado">
+														Casada/o
+													</label>
+												</div>
+											</div>
+											<div class="col-auto py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="estado_civil" id="union_hecho">
+													<label class="form-check-label" for="union_hecho">
+														Unión de hecho (registrada)
+													</label>
+												</div>
+											</div>
+											<div class="col-auto py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="estado_civil" id="viuda_o">
+													<label class="form-check-label" for="viuda_o">
+														Viuda/o
+													</label>
+												</div>
+											</div>
+											<div class="col-auto py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="estado_civil" id="soltera_o">
+													<label class="form-check-label" for="soltera_o">
+														Soltera/o
+													</label>
+												</div>
+											</div>
+											<div class="col-auto py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="estado_civil" id="divorciada_o">
+													<label class="form-check-label" for="divorciada_o">
+														Divorciada/o
+													</label>
+												</div>
+											</div>
+											<div class="col-auto py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="estado_civil" id="separada_o">
+													<label class="form-check-label" for="separada_o">
+														Separada/o
+													</label>
+												</div>
+											</div>
+											<div class="col-auto py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="estado_civil" id="union_libre">
+													<label class="form-check-label" for="union_libre">
+														Unión libre, "compromiso"
+													</label>
+												</div>
+											</div>
+											<div class="col-12 py-1">
+												<div class="row row-cols-auto d-flex align-items-center">
+													<div class="col-auto">
+														<div class="form-check form-check-sm">
+															<input class="form-check-input" type="radio" name="estado_civil" id="otro_estado_civil">
+															<label class="form-check-label" for="otro_estado_civil">
+																Otro (especifique)
+															</label>
+														</div>
+													</div>
+													<div class="col-auto" id="estado_civil_div" style="display:none;">
+														<input type="text" class="form-control form-control-sm" id="text_otro_estado_civil">
+													</div>
+												</div>
+												
+											</div>
+											
+										</div>
+									</div>
+									
+								</li>
+								<li class="list-group-item">
+									
+									<div class="form-group">
+										<div class="row mb-1 py-1 d-flex align-items-center">
+											<div class="col-12 mb-2">
+												<label for="etnia"><b class="text-secondary-emphasis">Pertenencia étnico-cultural:</b></label>
+											</div>
+											<div class="col-6 py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="etnia" id="indigena">
+													<label class="form-check-label" for="indigena">
+														Indígena
+													</label>
+												</div>
+											</div>
+											<div class="col-6 py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="etnia" id="afrodescendiente">
+													<label class="form-check-label" for="afrodescendiente">
+														Afrodescendiente
+													</label>
+												</div>
+											</div>
+											<div class="col-6 py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="etnia" id="montubio">
+													<label class="form-check-label" for="montubio">
+														Montubia/o
+													</label>
+												</div>
+											</div>
+											<div class="col-6 py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="etnia" id="mestiza_o">
+													<label class="form-check-label" for="mestiza_o">
+														Mestiza/o
+													</label>
+												</div>
+											</div>
+											<div class="col-6 py-1">
+												<div class="form-check form-check-sm">
+													<input class="form-check-input" type="radio" name="etnia" id="blanca_o">
+													<label class="form-check-label" for="blanca_o">
+														Blanca/o
+													</label>
+												</div>
+											</div>
+											<div class="col-6 py-1">
+												<div class="row row-cols-auto d-flex align-items-center">
+													<div class="col-auto">
+														<div class="form-check form-check-sm">
+															<input class="form-check-input" type="radio" name="etnia" id="otra_etnia">
+															<label class="form-check-label" for="otra_etnia">
+																Otra:
+															</label>
+														</div>
+													</div>
+													<div class="col-auto" id="etnia_div" style="display:none;">
+														<input type="text" class="form-control form-control-sm" id="text_otra_etnia">
+													</div>
+												</div>
+												
+											</div>
+											
+										</div>
+									</div>
+									
+								</li>
+							</ul>
+						</div>
+
+						<div class="row d-flex justify-content-center">
+							<div class="col-6">
+								<button type="button" class="btn btn-success w-100" id="btn_firmar">Firmar y Guardar</button>
+							</div>	
+						</div>
+						
+						<!--<div class="card px-0">
+							
+							<div class="card-header app-toolbar py-3">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h2 class="fw-bold mb-1">FIRMA</h2>
+								
+								</div>
+								
+							</div>
+							<div class="card-body">
+								<canvas id="pizarra" height="75" style="touch-action: none; border-bottom: 1px solid #ccc;"></canvas>
+							</div>
+						</div>-->
+						
+						
+						
+					</div>
+					</div>
+                </div>
+                <!--<div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                </div>-->
+              </div>
+        </div>
+    </div>
+	<div class="modal fade" id="modalFirma" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="staticBackdropLabel">FIRMA DEL FORMULARIO</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>	
+				</div>
+                <div class="modal-body text-center">
+                    <canvas id="pizarraFirma" height="75" style="touch-action: none; border-bottom: 1px solid #ccc;"></canvas>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" id="btnReiniciarFirma" class="btn btn-danger">Reiniciar</button>
+                    <button type="button" id="btnGuardarFirma" class="btn btn-success">Guardar</button>
+                </div>
+              </div>
+        </div>
+    </div>
+	<div class="modal fade" id="modalInfoEdificios" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Información Edificios y Ambientes</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Esta es la información de los edificios y ambientes que se encuentra registrada actualmente:</p>
+                    <div class="accordion accordion-flush" id="accordionFlushExample">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingOne">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                                Accordion Item #1
+                              </button>
+                            </h2>
+                            <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body p-0 ps-3">
+                                    
+                                    <div class="accordion accordion-flush" id="accordionFlushExampleOne">
+                                        <h2 class="accordion-header" id="flush-headingOneOne">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwoOne" aria-expanded="false" aria-controls="flush-collapseTwoOne">
+                                                Accordion Item #1
+                                            </button>
+                                        </h2>
+                                        <div id="flush-collapseTwoOne" class="accordion-collapse collapse" aria-labelledby="flush-headingTwoOne" data-bs-parent="#accordionFlushExampleOne">
+                                            <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the second item's accordion body. Let's imagine this being filled with some actual content.</div>
+                                        </div>
+                                    </div>
+                                    <ul class="list-group list-group-flush">
+                                        
+                                        <li class="list-group-item">An item</li>
+                                        <li class="list-group-item">A second item</li>
+                                        <li class="list-group-item">A third item</li>
+                                    </ul>
+                                    
+                                </div>
+                            </div>
+                          </div>
+                          <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingTwo">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                                Accordion Item #2
+                              </button>
+                            </h2>
+                            <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                              <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the second item's accordion body. Let's imagine this being filled with some actual content.</div>
+                            </div>
+                          </div>
+                          <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingThree">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                                Accordion Item #3
+                              </button>
+                            </h2>
+                            <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
+                              <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the third item's accordion body. Nothing more exciting happening here in terms of content, but just filling up the space to make it look, at least at first glance, a bit more representative of how this would look in a real-world application.</div>
+                            </div>
+                          </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal_voces" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Seleccione una voz para el asistente</h5>
+                    <!--<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
+                </div>
+                <div class="modal-body text-justify">
+                    <p style="font-size: 10pt;">
+                        No se ha encontrado la voz del asistente en su navegador.
+                        Por favor, seleccione una voz para el asistente de energía. <br/>
+                        <em>Nota: Esta voz será guardada en el navegador, y será utilizada por defecto en próximas consultas.</em>
+                    </p>
+                    <form>
+                        <div class="mb-3">
+                            <label for="select_voz" class="col-form-label"><b>Voz para asistente energético:</b></label>
+                            <div class="input-group">
+                                <select id="select_voz" class="form-select" aria-label="Default select male voice">
+                                    <option selected disabled>Seleccione voz...</option>
+                                    <!--<option value="1">One</option>
+                                    <option value="2">Two</option>
+                                    <option value="3">Three</option>-->
+                                </select>
+                                <span class="input-group-btn">
+                                    <button id="play_voz" type="button" class="btn btn-success">
+                                        <i class="fa-solid fa-play" style="color:white;"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <!--<input type="text" class="form-control" id="recipient-name">-->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="guardar_voz" class="btn btn-primary" disabled>Guardar voz</button>
+                </div>
+              </div>
+        </div>
+    </div>
+
+</html>

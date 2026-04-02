@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente de Consumo Eléctrico</title>
+    <meta name="author" content="Teddy Alejandro Moreira Vélez">
+    <meta name="description" content="Asistente de Consumo Eléctrico">
+    <link rel="shortcut icon" type="image/ico" href="../../static/img/favicon.ico"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="../../static/css/loading.css">
+    <link rel="stylesheet" href="../../static/resources/avatar/TemplateData/style.css"> <!--Revisar-->
+    <script src="https://kit.fontawesome.com/ba52fcc0fa.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+</head>
+<body>
+    <div class="contenedor">
+        <div class="asistente" style="padding-top: 0;">
+            <!--<div id="unity-container" class="unity-desktop" >-->
+            <div class="controles" id="cont-voice-btn" style="z-index:500;position: absolute;top: 25%;left: 18%;cursor: pointer;"><!--bottom: 88px;-->
+                <div class="container-voice" id="voice-btn"  onclick="toggleVoz()">
+                    <div class="voice-btn voice-micup" id="btnMicUp">
+                        <i class="fa-solid fa-microphone" style="font-size:15pt;color: #6d6b6b;" aria-hidden="true"></i>
+                    </div>
+                    <div class="voice-btn voice-micstop" id="btnMicStop" style="display: none;">
+                        <i class="fa-solid fa-microphone-slash" style="font-size:15pt;color: #c32828;" aria-hidden="true"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="controles" id="controles" style="z-index:500;position: absolute;top:22%"><!--bottom: 88px;-->
+                <div class="container-icon" id="asistente-btn" onclick="inicializarAsistente()" disabled>
+                    <div id="outer-circle">
+                        <div class="inner-wave inicializar-asistente" id="inner-wave" disabled>
+                            <span id="icon_control" class="icon_control" title="Iniciar Asistente">
+                                <i class="fa-solid fa-play"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <p id="info-adicional"></p>
+            </div>
+            <div class="contenedor-typing" id="contenedor-typing" style="z-index:499; width:25%;position: absolute;bottom:88px;border-radius: 20px;background-color: #ffffffad;">
+                <div class="filtro-typing" style="display:none"></div>
+                <div class="texto-type">
+                    <p id="typeContenido" style="padding:5px 15px;">
+    
+                    </p>
+                </div>
+            </div>
+            <iframe src="/avatar" style="height: 100vh;width: 100%;display: flex; justify-content: center; align-items: center;">
+
+            </iframe>
+                
+            
+            <!--</div>-->
+        </div>
+        <div class="formulario">
+            <div class="formulario-carga" id="formulario-carga" style="display: none;">
+                <div class="loadingio-spinner-ellipsis-2by998twmg8">
+                    <div class="ldio-yzaezf3dcmj">
+                        <div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                </div>
+                <div class="mensaje-cargaf" id="mensaje-cargaf">
+                    <p>Cargando formulario...</p>
+                </div>
+            </div>
+            <div style="width:100%;height:100%;overflow-y:scroll;">
+                <div class="container mt-5">
+                    <h2 class="mb-4 text-center">Asistente de Consumo Eléctrico</h2>
+                    <div>
+                        <div id="select_param_click">
+                            <div class="row mt-2">
+                                <div class="form-group col-4 row mb-3">
+                                    <b>Edificio 2:</b>
+                                    <div class="col-10 pe-0">
+                                        <select class="form-select" name="combo_edificio" id="combo_edificio" onchange="getPiso()">
+                                            <option value="" selected disabled>Seleccione el edificio</option>
+                                        </select>
+                                        <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                                    </div>
+                                    <div class="col-2">
+                                        <button class="btn btn-outline-info rounded-circle" id="btn_consultar_infoedificios" title="Edificios y ambientes disponibles" onclick="$('#modalInfoEdificios').modal('show');"><i class="fa-solid fa-question"></i></button>
+                                    </div>
+                                </div>
+                                <div class="form-group col-4 row mb-3">
+                                    <b>Piso:</b>
+                                    <div class="col-12">
+                                        <select class="form-select" name="combo_pisos" id="combo_pisos" onchange="getAmbiente()">
+                                            <option value="" selected disabled>Seleccione el piso</option>
+                                        </select>
+                                        <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                                    </div>
+                                </div>
+                                <div class="form-group col-4 row mb-3">
+                                    <b>Ambiente:</b>
+                                    <div class="col-12">
+                                        <select class="form-select" name="combo_ambientes" id="combo_ambientes">
+                                            <option value="" selected disabled>Seleccione el ambiente</option>
+                                        </select>
+                                        <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <div class="form-group col-3">
+                                    <div id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                                        <i class="fa fa-calendar"></i>&nbsp;
+                                        <span></span> <i class="fa fa-caret-down"></i>
+                                    </div>
+                                    <script type="text/javascript">
+                                        $(function() {
+                                        
+                                            var start = moment().subtract(29, 'days');
+                                            var end = moment();
+                                        
+                                            function cb(start, end) {
+                                                $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+                                            }
+                                        
+                                            $('#reportrange').daterangepicker({
+                                                startDate: start,
+                                                endDate: end,
+                                                ranges: {
+                                                   'Today': [moment(), moment()],
+                                                   'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                                                   'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                                                   'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                                                   'This Month': [moment().startOf('month'), moment().endOf('month')],
+                                                   'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                                                }
+                                            }, cb);
+                                        
+                                            cb(start, end);
+                                        
+                                        });
+                                    </script>
+                                    <!-- <div class="input-group">
+                                        <span class="input-group-text">Fecha Inicio</span>
+                                        <input type="date" class="form-control" id="fecha_busqueda">
+                                        <span class="input-group-text">Fecha Fin</span>
+                                        <input type="date" class="form-control" id="fecha_busqueda_fin">
+                                    </div> -->
+                                </div>
+                                <div class="form-group col-1 row mb-3 d-flex justify-content-center align-items-end">
+                                    <!--<b>Fecha:</b>-->
+                                    <div class="col-12">
+                                        <button class="btn btn-primary" id="btn_consultar_energia" title="Consultar Informacion" onclick="consultarDatosEnergeticos()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                        <div class="row mt-2" id="select_param_voz" style="display: none;">
+                            <div class="form-group col-4 row mb-3">
+                                <b>Edificio:</b>
+                                <div class="col-10">
+                                    <input type="text" class="form-control" name="combo_edificio_v" id="combo_edificio_v" disabled>
+                                    <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                                </div>
+                                <div class="col-2">
+                                    <button class="btn btn-outline-info rounded-circle" id="btn_consultar_infoedificios" title="Edificios y ambientes disponibles" onclick="$('#modalInfoEdificios').modal('show');"><i class="fa-solid fa-question"></i></button>
+                                </div>
+                            </div>
+                            <div class="form-group col-4 row mb-3">
+                                <b>Ambiente:</b>
+                                <div class="col-12">
+                                    <input type="text" class="form-control" name="combo_ambientes_v" id="combo_ambientes_v" disabled>
+                                    <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                                </div>
+                            </div>
+                            <div class="form-group col-3 row mb-3">
+                                <b>Fecha:</b>
+                                <div class="col-12">
+                                    <input type="date" class="form-control" id="fecha_busqueda_v">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <h3 style="display: inline-block; margin-right:15px">Consumo Actual</h3>
+                        </div>
+                        <div style="height: 200px;width: 100%;display: flex;gap:15px">
+                            <div id="grafica_cons_act" style="width: 70%;border:2px solid #e1e1e1;border-radius: 5px;"></div>
+                            <div id="detalle_cons_act" style="width: 30%;border:2px solid #e1e1e1;border-radius: 5px;background-color: #e1e1e1;display: flex;justify-content: space-evenly;align-items: center;flex-direction: column;">
+                                <div class="container_cons container_cons_act_p">
+                                    <p class="txt_cons">
+                                        Consumo actual del Ambiente <br>
+                                        <span class="val_cons" id="val_consact_amb">0w</span>
+                                    </p>
+                                </div>
+                                <div class="container_cons container_cons_act_t">
+                                    <p class="txt_cons">
+                                        Consumo total del Edificio <br>
+                                        <span class="val_cons" id="val_consact_edi">0w</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <h3 style="display: inline-block; margin-right:15px">Consumo Futuro</h3>
+                        </div>
+                        <div style="height: 200px;width: 100%;display: flex;gap:15px;">
+                            <div id="grafica_cons_fut" style="width: 70%;border:2px solid #e1e1e1;border-radius: 5px;"></div>
+                            <div id="detalle_cons_fut" style="width: 30%;border:2px solid #e1e1e1;border-radius: 5px;background-color: #e1e1e1;display: flex;justify-content: space-evenly;align-items: center;flex-direction: column;">
+                                <div class="container_cons container_cons_fut_p">
+                                    <p id="txt_cons_fut" class="txt_cons">
+                                        Consumo futuro del Ambiente <br>
+                                        <span class="val_cons" id="val_consfut_amb">0w</span>
+                                    </p>
+                                </div>
+                                <div class="container_cons container_cons_fut_t">
+                                    <p id="txt_cons_fut" class="txt_cons">
+                                        Consumo total del Edificio <br>
+                                        <span class="val_cons" id="val_consfut_edi">0w</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <h3 style="display: inline-block; margin-right:15px">Recomendaciones</h3>
+                        </div>
+                        <div class="form-floating" style="height: 200px;width: 100%;">
+                            <textarea class="form-control" placeholder="Aqui se mostraran las recomendaciones..." id="txtarea_recomendaciones" style="height: 80%"></textarea>
+                            <label for="txtarea_recomendaciones">Recomendaciones</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="fondo_popups" style="display:none;position: absolute;width: 100vw; height: 100vh;background-color: rgba(0, 0, 0, 0.118); z-index: 499;">
+
+        </div>
+    </div>
+    <div class="modal fade" id="modal_autorizacion" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">AUTORIZACIÓN DE USO DE DATOS PARA INVESTIGACIONES</h5>
+                </div>
+                <div class="modal-body text-justify">
+                    <p><b>Por favor, antes de continuar es necesario que lea y acepte lo siguiente:</b></p>
+                    <p style="font-size: 10pt;">
+                        De conformidad con lo dispuesto en la Ley Orgánica de Protección de Datos Personales vigente 
+                        en la República del Ecuador, acepto el contenido del presente formulario electrónico y doy 
+                        mi consentimiento explícito a la Universidad Técnica de Manabí (UTM) para el tratamiento de 
+                        mis datos personales y datos sensibles consignados en el mismo, quien actuará como el 
+                        responsable del tratamiento de mis datos personales y sensibles, de acuerdo a lo establecido 
+                        en la norma antes citada. Con la suscripción del presente documento, consiento y autorizo a 
+                        la Universidad Técnica de Manabí (UTM) mis datos personales y sensibles <b>sean utilizados 
+                        únicamente con fines investigativos de la UTM, y los mismo no podrán ser cedidos y tratados 
+                        por terceros, ni publicados.</b> Declaro que toda la información consignada es verídica y exacta, 
+                        especialmente en la calidad en la que lo manifiesto en el presente documento. 
+                        También se me ha notificado que la información respecto al tratamiento, finalidad, 
+                        conservación, ejercicio de derechos determinados en la Ley Orgánica de Protección de Datos 
+                        Personales. El consentimiento explícito para el tratamiento de datos personales y sensibles 
+                        otorgado por el presente instrumento se realiza de manera voluntaria, previa, explícita, 
+                        informada e inequívoca.
+                    </p>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" id="rechazar_auto" class="btn btn-default" onclick="clickAutorizacion('R')">Rechazar</button>
+                    <button type="button" id="aceptar_autor" class="btn btn-primary" onclick="clickAutorizacion('A')">Aceptar</button>
+                </div>
+              </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalInfoEdificios" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Información Edificios y Ambientes</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Esta es la información de los edificios y ambientes que se encuentra registrada actualmente:</p>
+                    <div class="accordion accordion-flush" id="accordionFlushExample">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingOne">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                                Accordion Item #1
+                              </button>
+                            </h2>
+                            <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body p-0 ps-3">
+                                    
+                                    <div class="accordion accordion-flush" id="accordionFlushExampleOne">
+                                        <h2 class="accordion-header" id="flush-headingOneOne">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwoOne" aria-expanded="false" aria-controls="flush-collapseTwoOne">
+                                                Accordion Item #1
+                                            </button>
+                                        </h2>
+                                        <div id="flush-collapseTwoOne" class="accordion-collapse collapse" aria-labelledby="flush-headingTwoOne" data-bs-parent="#accordionFlushExampleOne">
+                                            <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the second item's accordion body. Let's imagine this being filled with some actual content.</div>
+                                        </div>
+                                    </div>
+                                    <ul class="list-group list-group-flush">
+                                        
+                                        <li class="list-group-item">An item</li>
+                                        <li class="list-group-item">A second item</li>
+                                        <li class="list-group-item">A third item</li>
+                                    </ul>
+                                    
+                                </div>
+                            </div>
+                          </div>
+                          <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingTwo">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                                Accordion Item #2
+                              </button>
+                            </h2>
+                            <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                              <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the second item's accordion body. Let's imagine this being filled with some actual content.</div>
+                            </div>
+                          </div>
+                          <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingThree">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                                Accordion Item #3
+                              </button>
+                            </h2>
+                            <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
+                              <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the third item's accordion body. Nothing more exciting happening here in terms of content, but just filling up the space to make it look, at least at first glance, a bit more representative of how this would look in a real-world application.</div>
+                            </div>
+                          </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal_voces" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Seleccione una voz para el asistente</h5>
+                    <!--<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
+                </div>
+                <div class="modal-body text-justify">
+                    <p style="font-size: 10pt;">
+                        No se ha encontrado la voz del asistente en su navegador.
+                        Por favor, seleccione una voz para el asistente de energía. <br/>
+                        <em>Nota: Esta voz será guardada en el navegador, y será utilizada por defecto en próximas consultas.</em>
+                    </p>
+                    <form>
+                        <div class="mb-3">
+                            <label for="select_voz" class="col-form-label"><b>Voz para asistente energético:</b></label>
+                            <div class="input-group">
+                                <select id="select_voz" class="form-select" aria-label="Default select male voice" onchange="verificarVoz()">
+                                    <option selected disabled>Seleccione voz...</option>
+                                    <!--<option value="1">One</option>
+                                    <option value="2">Two</option>
+                                    <option value="3">Three</option>-->
+                                </select>
+                                <span class="input-group-btn">
+                                    <button id="play_voz" type="button" class="btn btn-success" onclick="reproducir();">
+                                        <i class="fa-solid fa-play" style="color:white;"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <!--<input type="text" class="form-control" id="recipient-name">-->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="guardar_voz" class="btn btn-primary" onclick="guardarVocesDefault()" disabled>Guardar voz</button>
+                </div>
+              </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="../../static/scripts/global.js"></script>
+    <script src="../../static/scripts/script.js"></script>
+</body>
+</html>
