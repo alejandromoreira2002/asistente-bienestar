@@ -1,4 +1,4 @@
-import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?min';
+// import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?min';
 
 const Index = (function () {
   
@@ -28,20 +28,21 @@ const Index = (function () {
     );
   }
 
-  const audioMotion = new AudioMotionAnalyzer(document.getElementById('audioMotion'), {
-    height: 70,
-    ansiBands: false,
-    showScaleX: false,
-    bgAlpha: 0,
-    overlay: true,
-    mode: 2,
-    frequencyScale: "log",
-    showPeaks: false,
-    reflexRatio: 0.5,
-    reflexAlpha: 1,
-    reflexBright: 1,
-    smoothing: 0.7
-  });
+  // const audioMotion = new AudioMotionAnalyzer(document.getElementById('audioMotion'), {
+  //   height: 70,
+  //   ansiBands: false,
+  //   showScaleX: false,
+  //   bgAlpha: 0,
+  //   overlay: true,
+  //   mode: 2,
+  //   frequencyScale: "log",
+  //   showPeaks: false,
+  //   reflexRatio: 0.5,
+  //   reflexAlpha: 1,
+  //   reflexBright: 1,
+  //   smoothing: 0.7
+  // }) || null;
+  const audioMotion = null; // --- IGNORE ---
   let audioMotionStream;
 
   // Parámetros de detección de silencio
@@ -246,50 +247,50 @@ const Index = (function () {
     mediaRecorder = new MediaRecorder(stream);
 
     // Conectar al visualizador
-    audioMotionStream = audioMotion.audioCtx.createMediaStreamSource(stream);
-    audioMotion.connectInput(audioMotionStream);
-    audioMotion.volume = 0;
+    // audioMotionStream = audioMotion.audioCtx.createMediaStreamSource(stream);
+    // audioMotion.connectInput(audioMotionStream);
+    // audioMotion.volume = 0;
 
     // Crear analysers para detectar silencio
-    const analyser = audioMotion.audioCtx.createAnalyser();
-    analyser.fftSize = 2048;
-    audioMotionStream.connect(analyser);
-    const dataArray = new Uint8Array(analyser.fftSize);
+    // const analyser = audioMotion.audioCtx.createAnalyser();
+    // analyser.fftSize = 2048;
+    // audioMotionStream.connect(analyser);
+    // const dataArray = new Uint8Array(analyser.fftSize);
     silenceStart = null;
 
     // Cada 200 ms comprobamos el nivel de RMS
-    silenceInterval = setInterval(() => {
-      analyser.getByteTimeDomainData(dataArray);
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        const norm = (dataArray[i] - 128) / 128;
-        sum += norm * norm;
-      }
-      const rms = Math.sqrt(sum / dataArray.length);
+    // silenceInterval = setInterval(() => {
+    //   analyser.getByteTimeDomainData(dataArray);
+    //   let sum = 0;
+    //   for (let i = 0; i < dataArray.length; i++) {
+    //     const norm = (dataArray[i] - 128) / 128;
+    //     sum += norm * norm;
+    //   }
+    //   const rms = Math.sqrt(sum / dataArray.length);
 
-      if (rms > silenceThreshold) {
-        // Volumen detectado: resetamos el contador de silencio
-        silenceStart = null;
-      } else {
-        // No hay volumen: empezamos o comprobamos el tiempo de silencio
-        if (!silenceStart) {
-          silenceStart = Date.now();
-        } else if (Date.now() - silenceStart > silenceDelay) {
-          // Silencio prolongado: detenemos la grabación
-          if (mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-          }
-          clearInterval(silenceInterval);
-        }
-      }
-    }, 200);
+    //   if (rms > silenceThreshold) {
+    //     // Volumen detectado: resetamos el contador de silencio
+    //     silenceStart = null;
+    //   } else {
+    //     // No hay volumen: empezamos o comprobamos el tiempo de silencio
+    //     if (!silenceStart) {
+    //       silenceStart = Date.now();
+    //     } else if (Date.now() - silenceStart > silenceDelay) {
+    //       // Silencio prolongado: detenemos la grabación
+    //       if (mediaRecorder.state === 'recording') {
+    //         mediaRecorder.stop();
+    //       }
+    //       clearInterval(silenceInterval);
+    //     }
+    //   }
+    // }, 200);
 
     mediaRecorder.ondataavailable = event => {
       audioChunks.push(event.data);
     };
 
     mediaRecorder.onstop = () => {
-      clearInterval(silenceInterval);
+      // clearInterval(silenceInterval);
       closeMicrophone();
     };
 
@@ -304,7 +305,7 @@ const Index = (function () {
     closedMicroIcon.hidden = false;
 
     // Desconectar visualizador
-    audioMotion.disconnectInput(audioMotionStream);
+    // audioMotion.disconnectInput(audioMotionStream);
     audioMotionStream = null;
     
     // Preparar el blob y enviarlo
@@ -367,6 +368,9 @@ const Index = (function () {
       }
     });
     $('#btn_firmar').on('click', function() {
+      console.log("Iniciar proceso de firma")
+      let textoComando = "El usuario ha terminado de llenar el formulario y da click en 'Guardar y Firmar'. Mencionale al usuario que acaba de aparecer una ventana en la que debe dibujar su firma para poder guardar el formulario. Su firma debe ser dibujada sobre la linea del recuadro y que una vez termine de dibujar su firma, debe dar click en el boton de 'Guardar' para finalizar el proceso. NO menciones ofrecer ayuda.";
+      Conversar(textoComando, "text", true);
       $('#modalFirma').modal('show');
     });
     $('#n_ficha').on('click', cambiarNumFicha);
@@ -558,7 +562,7 @@ const Index = (function () {
     // Aquí puedes remover o simplemente dejarla vacía
   }
 
-  async function Conversar(audioBlob, type='voice') {
+  async function Conversar(audioBlob, type='voice', comando=false) {
     
     // Creamos un nuevo controller para esta petición
     currentAbortController = new AbortController();
@@ -566,6 +570,7 @@ const Index = (function () {
 
     const formData = new FormData();
 
+    formData.append('comando', comando);
     formData.append('tipo', type);
     if(type == 'voice'){
       formData.append('voice', audioBlob, 'voice.webm');
@@ -683,8 +688,6 @@ const Index = (function () {
             //   break;
             case 'audio':
               // Aquí puedes manejar los datos de audio (por ejemplo, para reproducir)
-              // console.log('Audio recibido', msg.data);
-              // audioQueue.push(msg.data); // agrega a la cola para reproducción
               sendTalking(msg.data, 'true');
               playNext(); // función que maneja la reproducción
               break;
@@ -1667,30 +1670,33 @@ const Index = (function () {
         archivo += '_' + $('#n_ficha').text();
       }
       try {
-        const response = await fetch('/guardar-firma?archivo=' + archivo.replaceAll(' ', '_'), {
-          method: 'POST',
-          body: formData
+        let textoComando = "La ficha de trabajo social del usuario se ha guardado y ha sido enviada al correo del centro de atencion integral para la igualdad de genero y la salud sexual y reproductiva. Mencionaselo al usuario"
+        Conversar(textoComando, "text", true)
+        Swal.fire({
+          title: 'Éxito',
+          text: 'La firma ha sido guardada correctamente',
+          icon: 'success',
+          confirmButtonText: 'Aceptar'
+        }).then(() => {
+          // Cerrar modal después de guardar
+          
         });
+        // const response = await fetch('/guardar-firma?archivo=' + archivo.replaceAll(' ', '_'), {
+        //   method: 'POST',
+        //   body: formData
+        // });
 
-        const result = await response.json();
+        // const result = await response.json();
 
-        if (result.ok) {
-          nombreArchivoFirma = result.datos;
-          const modalFirma = bootstrap.Modal.getInstance(document.getElementById('modalFirma'));
-          if (modalFirma) modalFirma.hide();
-          enviarFormulario();
-          // Swal.fire({
-          //   title: 'Éxito',
-          //   text: 'La firma ha sido guardada correctamente',
-          //   icon: 'success',
-          //   confirmButtonText: 'Aceptar'
-          // }).then(() => {
-          //   // Cerrar modal después de guardar
-            
-          // });
-        } else {
-          Swal.fire('Error', result.observacion || 'Error al guardar la firma', 'error');
-        }
+        // if (result.ok) {
+        //   nombreArchivoFirma = result.datos;
+        //   const modalFirma = bootstrap.Modal.getInstance(document.getElementById('modalFirma'));
+        //   if (modalFirma) modalFirma.hide();
+        //   enviarFormulario();
+          
+        // } else {
+        //   Swal.fire('Error', result.observacion || 'Error al guardar la firma', 'error');
+        // }
       } catch (error) {
         console.error('Error:', error);
         Swal.fire('Error', 'Error al guardar la firma: ' + error.message, 'error');

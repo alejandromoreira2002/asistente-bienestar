@@ -29,7 +29,6 @@ from controladores.chats import ChatsControlador
 from controladores.algoritmo_ml import AlgoritmoMLControlador
 from controladores.formulario import FormularioControlador
 from funciones.asistente import getPromptAsistentes
-from funciones.funciones import determinarSemanaActual, getRandomDF
 
 from data.globals import EVENT_BUFFERS
 
@@ -80,7 +79,6 @@ with app.test_request_context():
 =======================
 """
 
-print("aa")
 # Sirve archivos de la carpeta assets
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
@@ -125,13 +123,6 @@ def chatPage():
 def modeloAvatar():
     return render_template('avatar.html')
 
-# Obtener edificios
-@app.get('/edificios')
-def get_edificios():
-    respuesta = controladorEdificios.getEdificios()
-    estado = 200 if respuesta['ok'] else 500
-    return jsonify(respuesta), estado
-
 # Pruebas y utilidades
 @app.get('/chats')
 def prueba_chats():
@@ -151,20 +142,6 @@ def reaccionar_msg():
     reaccion = data_dict['reaccion']
     resultado = controladorAsistente.reaccionarMensaje(session.get('hilo'), idMensaje, reaccion)
     return jsonify(resultado)
-
-
-# Consumo de edificios
-@app.get('/datos')
-def get_consumo_edificios():
-
-    edificio = request.args.get('idEdificacion')
-    piso = request.args.get('idPiso')
-    ambiente = request.args.get('idAmbiente')
-    fechaInicio = request.args.get('fechaInicio')
-    fechaFin = request.args.get('fechaFin')
-    respuesta = controladorEdificios.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
-    return jsonify(respuesta)
-
 
 # Endpoint de cancelación segura por pestaña (puede ser llamado con sendBeacon)
 @app.post("/cancelar")
@@ -330,79 +307,6 @@ def inicializar():
     #     }
     # )
 
-
-
-# Conversación principal (voz a texto, procesamiento y streaming SSE)
-@app.post('/conversarant')
-def conversarAnt():
-    if 'historial_consumo' not in session:
-        session['historial_consumo'] = []
-    if 'hilo' not in session:
-        session['hilo'] = controladorAsistente.crearHilo()
-    if 'prediccion' not in session:
-        session['prediccion'] = {'msgs': []}
-    if 'intenciones' in session:
-        print("Intenciones al inicio de la consulta: ", session['intenciones'])
-    if 'intenciones' in session and 'actual' in session['intenciones']:
-        session['intenciones']['anterior'] = session['intenciones']['actual']
-    else:
-        session['intenciones'] = {'anterior': 'ninguna'}
-    
-    session['intenciones']['actual'] = 'ninguna'
-    session['intenciones']['siguiente'] = 'ninguna'
-    
-    codigo = session['hilo']
-    
-    intencion = request.form.get('intencion')
-    #print(f"Intención recibida: {intencion}")
-    
-    voz = request.files.get('voice')
-    #print("Paso #1: Conversión de voz a texto.")
-    
-    tiempo_inicio = time.time()
-    sttRespuesta = controladorAsistente.speech_to_text(voz, codigo)
-    tiempo_fin = time.time()
-    print(f"Tiempo de ejecución Conversión de voz a texto: {tiempo_fin - tiempo_inicio:.2f} segundos")
-    
-    textStt = sttRespuesta['datos'] if sttRespuesta['ok'] else 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
-    controladorChats.enviarMensaje(codigo, [{"role": "user", "content": textStt}])
-    respuesta = procesamientoConversacion(textStt, intencion)
-    #print("Respuesta procesada:", respuesta)
-    #print("Contenido de sesión:", session.get('contenido'))
-    
-    contenido = session.get('contenido', [])
-    intenciones = session.get('intenciones', [])
-    #print("Intenciones antes de la respuesta:", intenciones)
-    
-    # El front nos manda un stream_id por cabecera; si no, lo generamos
-    stream_id = request.headers.get("x-stream-id") or str(uuid.uuid4())
-
-    # Evento de cancelación exclusivo de ESTA pestaña
-    cancel_event = Event()
-    CANCEL_EVENTS[stream_id] = cancel_event
-
-    gen = event_stream_universal(
-        hilo=codigo,
-        #stream_id=stream_id,
-        modo="conversar",
-        mensajes=respuesta,
-        intenciones=intenciones,
-        contenido=contenido,
-        controladorAsistente=controladorAsistente,
-        controladorChats=controladorChats,
-        cancel_event=cancel_event
-    )
-    
-    return Response(
-        stream_with_context(gen),
-        mimetype='text/event-stream',
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
-        }
-    )
-
 @app.post('/conversar')
 def conversar():
     if 'hilo' not in session:
@@ -411,6 +315,7 @@ def conversar():
     codigo = session['hilo']
     
     tipo = request.form.get('tipo')
+    comando = request.form.get('comando', False)
     texto = None
     voz = None
     if tipo == 'voice':
@@ -438,7 +343,7 @@ def conversar():
     cancel_event = Event()
     CANCEL_EVENTS[stream_id] = cancel_event
     
-    def event_stream_universal_agente(hilo, modo, mensaje, graph, cancel_event: Event, tipo="voice"):
+    def event_stream_universal_agente(hilo, modo, mensaje, graph, cancel_event: Event, tipo="voice", comando=False):
         config: RunnableConfig = {"configurable": {"thread_id": hilo}}
 
         buffer = ''
@@ -460,12 +365,14 @@ def conversar():
             print(graph.get_state(config).values)
             if graph.get_state(config).values:
                 datosEnInfo = graph.get_state(config).values['datos']
+                datosEnInfo['comando'] = comando
             else:
                 historial_msgs.append(SystemMessage(content="""
-                    Eres un asistente medico, te llamas Luis y te encuentras operativo en el consultorio de bienestar estudiantil. 
+                    Eres un asistente medico, te llamas Jacinto y te encuentras operativo en el centro de atencion integral para la igualdad de genero y la salud sexual y reproductiva. 
+                    Tu unico objetivo es guiar al usuario en el llenado de una ficha de acogida de trabajo social. 
                 """))
                 # historial_msgs.append(SystemMessage(content="""
-                #     Eres un asistente medico, te llamas Luis y te encuentras operativo en el consultorio de bienestar estudiantil. 
+                #     Eres un asistente medico, te llamas Jacinto y te encuentras operativo en el consultorio de bienestar estudiantil. 
                 #     Tu objetivo es asistir a pacientes para el llenado de una ficha de trabajo social con datos que
                 #     se te proporcionaran despues. Por el momento no preguntaras por datos personales al usuario, hasta 
                 #     que se te indique que lo hagas.
@@ -476,7 +383,11 @@ def conversar():
                 #     social como un proceso previo al triaje y consulta medica del paciente. Pregunta y responde de 
                 #     forma profesional como un doctor lo haria. 
                 # """))
-            historial_msgs.append(HumanMessage(content=mensaje))
+            if comando:
+                historial_msgs.append(AIMessage(content=mensaje))
+            else:
+                historial_msgs.append(HumanMessage(content=mensaje))
+                
             human_response = {"messages": historial_msgs, "datos":datosEnInfo}
             # print("Respuesta formateada para el grafo:")
             # print(human_response)
@@ -514,16 +425,16 @@ def conversar():
                 buffer += token
                 txt_completo += token
                 
-                if tipo=="voice":
-                    # Cortar por signos de puntuación
-                    parts = re.split(r'(?<=[.!?])\s+', buffer)
-                    if len(parts) > 1:
-                        for sent in parts[:-1]:
-                            sent = sent.strip()
-                            if sent:
-                                audio = controladorAsistente.text_to_speech(sent)
-                                yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
-                        buffer = parts[-1]
+                # if tipo=="voice" or tipo=="text" and comando:
+                # Cortar por signos de puntuación
+                parts = re.split(r'(?<=[.!?])\s+', buffer)
+                if len(parts) > 1:
+                    for sent in parts[:-1]:
+                        sent = sent.strip()
+                        if sent:
+                            audio = controladorAsistente.text_to_speech(sent)
+                            yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
+                    buffer = parts[-1]
             
             if clas == 'values' and '__interrupt__' in chunk:
                 #print(f"Interrupt:{chunk}")
@@ -547,7 +458,8 @@ def conversar():
         mensaje=textStt,
         graph=GRAPH,
         cancel_event=cancel_event,
-        tipo=tipo
+        tipo=tipo,
+        comando=comando
     )
     
     return Response(
@@ -559,32 +471,6 @@ def conversar():
             "Connection": "keep-alive",
         }
     )
-
-
-# Predicción de consumo (API)
-@app.get('/api/prediccion')
-def get_prediccion():
-    edificio = request.args.get('edificio')
-    piso = request.args.get('piso')
-    ambiente = request.args.get('ambiente')
-    fecha = request.args.get('fecha')
-    # Determinar las fechas de las semanas
-    lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
-    # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por día
-    ruta_json = 'consumo_energetico_2025_08_18.json'  # Cambiar por data de base de datos
-    # Se consulta la predicción de la última semana del consumo del ambiente seleccionado
-    data_semana_consumo = getRandomDF(lunes_semana_actual, inicio_semana_nueva)  # Cambiar por base de datos
-    # Se genera la data de variables exógenas para la predicción
-    textoLLM = (
-        "DÍA: Lunes | TIPO: feriado\nDÍA: Martes | TIPO: normal\nDÍA: Miércoles | TIPO: normal\n"
-        "DÍA: Jueves | TIPO: especial\nDÍA: Viernes | TIPO: especial\nDÍA: Sábado | TIPO: normal\nDÍA: Domingo | TIPO: normal"
-    )
-    data_generada = controladorAlgoritmoML.generarDF(textoLLM, inicio_semana_nueva)
-    data_nueva = pd.concat([data_semana_consumo, data_generada], axis=0)
-    fechas_prediccion = (lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva)
-    datos_prediccion = controladorAlgoritmoML.predecirConsumo(ruta_json, data_nueva, fechas_prediccion)
-    datos_ultima_semana = datos_prediccion[-7:]
-    return jsonify({'ok': True, 'observacion': None, 'datos': datos_ultima_semana})
 
 # Guardar firma
 @app.post('/guardar-firma')

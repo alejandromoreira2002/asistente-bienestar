@@ -1,4 +1,4 @@
-import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?min';
+import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer';
 
 const Index = (function () {
   
@@ -465,20 +465,10 @@ const Index = (function () {
 
   async function bindUIEvents() {
     $('#btnIniciarRecorrido').on('click', await iniciarRecorrido);
-    $('#combo_edificio').on('change', onEdificioChange);
-    $('#combo_pisos').on('change', onPisoChange);
-    $('#btnConsultarDatos').on('click', function() {
-      const idEdificio = $('#combo_edificio option:selected').val();
-      const idPiso = $('#combo_pisos option:selected').val();
-      const idAmbiente = $('#combo_ambientes option:selected').val();
-      console.log(idEdificio, idPiso, idAmbiente);
-      if (idEdificio && idPiso && idAmbiente) {
-        informacionConsumo({ idEdificio, idPiso, idAmbiente });
-      } else {
-        Swal.fire('Error', 'Seleccione todos los campos.', 'error');
-      }
-    });
     $('#btn_firmar').on('click', function() {
+      console.log("Iniciar proceso de firma")
+      let textoComando = "El usuario ha terminado de llenar el formulario y da click en 'Guardar y Firmar'. Mencionale al usuario que acaba de aparecer una ventana en la que debe dibujar su firma para poder guardar el formulario. Su firma debe ser dibujada sobre la linea del recuadro y que una vez termine de dibujar su firma, debe dar click en el boton de 'Guardar' para finalizar el proceso. NO menciones ofrecer ayuda.";
+      Conversar(textoComando, "text", true);
       $('#modalFirma').modal('show');
     });
     $('#n_ficha').on('click', cambiarNumFicha);
@@ -570,27 +560,6 @@ const Index = (function () {
       }
       
     });
-  }
-
-  function informacionConsumo(params) {
-    $('.text-btn-consultar-datos').html('Consultando datos... <span class="indicator-progress">Cargando... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>');
-    $('#btnConsultarDatos, select').addClass('disabled');
-    fetch(`/datos?idEdificacion=${params.idEdificio}&idPiso=${params.idPiso}&idAmbiente=${params.idAmbiente}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-      .then(response => response.json())
-      .then(result => {
-        $('.text-btn-consultar-datos').html('Consultar datos');
-        $('#btnConsultarDatos, select').removeClass('disabled');
-        if (result.ok) {
-          graficarInfoConsumo(result);
-        } else {
-          Swal.fire('Error', result.observacion, 'error');
-        }
-      })
-      .catch(error => {
-        $('.text-btn-consultar-datos').html('Consultar datos');
-        $('#btnConsultarDatos, select').removeClass('disabled');
-        Swal.fire("Error en el servidor.", "Error: " + error.message, "error");
-      });
   }
 
   async function mostrarChat() {
@@ -697,7 +666,7 @@ const Index = (function () {
     document.querySelector('.card-chat').style.display = 'none';
   }
 
-  async function Conversar(audioBlob, type='voice') {
+  async function Conversar(audioBlob, type='voice', comando=false) {
     
     // Creamos un nuevo controller para esta petición
     currentAbortController = new AbortController();
@@ -706,6 +675,7 @@ const Index = (function () {
 
     const formData = new FormData();
 
+    formData.append('comando', comando);
     formData.append('tipo', type);
     if(type == 'voice'){
       formData.append('voice', audioBlob, 'voice.webm');
@@ -778,6 +748,7 @@ const Index = (function () {
               // Aquí puedes manejar los datos de audio (por ejemplo, para reproducir)
               // console.log('Audio recibido', msg.data);
               // audioQueue.push(msg.data); // agrega a la cola para reproducción
+              console.log(msg.data.slice(0,10))
               sendTalking(msg.data, 'true');
               playNext(); // función que maneja la reproducción
               break;
@@ -1021,7 +992,6 @@ const Index = (function () {
   function ejecutarFuncion(aFunciones) {
     const funciones = {
       // 'get_usuario': getDatosUsuario,
-      'solicita_prediccion': predecirConsumo3,
       'solicita_recomendaciones': getRecomendaciones,
       'solicita_datos_consumo': getInfoLugar,
       'extraccion_incrementales': extraccion_datos_medico,
@@ -1181,27 +1151,6 @@ const Index = (function () {
     $(".data-recomendaciones").get(0).scrollIntoView({ behavior: 'smooth' });
     //return { success: false, reason: "Se han proporcionado las recomendaciones al usuario" };
   }
-  
-  // ============================== Funciones para Llamadas a la API y Gestión de Datos ==============================
-  async function getEdificios() {
-    $('#combo_edificio, #combo_pisos, #combo_ambientes').html("<option value='0' selected disabled>Cargando...</option>");
-    try {
-      const response = await fetch(`/edificios`);
-      const result = await response.json();
-      $('#combo_edificio, #combo_pisos, #combo_ambientes').html("<option value='0' selected disabled>Seleccionar</option>");
-      if (result.ok) {
-        dataEdificios = result.datos;
-        let ops = "<option value='' selected disabled>Seleccione el edificio</option>";
-        result.datos.forEach(element => ops += `<option value='${element.id}'>${element.edificacion}</option>`);
-        $('#combo_edificio').html(ops);
-        // llenarModalInfoEdificios();
-      } else {
-        Swal.fire('Error', result.observacion, 'error');
-      }
-    } catch (error) {
-      Swal.fire("Error en el servidor.", "Error: " + error.message, "error");
-    }
-  }
 
   function graficarInfoConsumo(result) {
     console.log(result);
@@ -1227,65 +1176,6 @@ const Index = (function () {
     if(result.datos.datos.length > 0){
       //predecirConsumo(result.datos.datos);
     }
-  }
-
-  function predecirConsumo3(datos) {
-    const resultConsumoFuturoAmbiente = datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
-    //const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_total.toFixed(2)) }));
-    const resultConsumoFuturoEdificio = datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
-    const consumoFuturoAmbiente = resultConsumoFuturoAmbiente.reduce((acc, item) => acc + item.y, 0);
-    //const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
-    const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
-    $('.consumo-futuro-ambiente').html(consumoFuturoAmbiente.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    $('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    const options = {
-      series: [{
-        name: 'Consumo futuro del ambiente',
-        data: resultConsumoFuturoAmbiente
-      }, {
-        name: 'Consumo futuro del edificio',
-        data: resultConsumoFuturoEdificio
-      }]
-    };
-    chart2.updateOptions(options);
-  }
-
-  function predecirConsumo() {
-    const idEdificio = $('#combo_edificio option:selected').val();
-    const idPiso = $('#combo_pisos option:selected').val();
-    const idAmbiente = $('#combo_ambientes option:selected').val();
-    const fecha = new Date().toISOString().split('T')[0]
-
-    fetch(`/api/prediccion?edificio=${idEdificio}&piso=${idPiso}&ambiente=${idAmbiente}&fecha=${fecha}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    })
-    .then(response => response.json())
-    .then(result => {
-      if (result.ok) {
-        const resultConsumoFuturoAmbiente = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
-        //const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_total.toFixed(2)) }));
-        const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
-        const consumoFuturoAmbiente = resultConsumoFuturoAmbiente.reduce((acc, item) => acc + item.y, 0);
-        //const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
-        const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
-        $('.consumo-futuro-ambiente').html(consumoFuturoAmbiente.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-        $('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-        //$('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-        const options = {
-          series: [{
-            name: 'Consumo futuro del ambiente',
-            data: resultConsumoFuturoAmbiente
-          }, {
-            name: 'Consumo futuro del edificio',
-            data: resultConsumoFuturoEdificio
-          }]
-        };
-        chart2.updateOptions(options);
-      } else {
-        Swal.fire('Ocurrió un error al consultar la información.', '', 'error');
-      }
-    });
   }
   
   // ------------------------------ Funciones de Inicialización ------------------------------
@@ -1730,30 +1620,42 @@ const Index = (function () {
         archivo += '_' + $('#n_ficha').text();
       }
       try {
-        const response = await fetch('/guardar-firma?archivo=' + archivo.replaceAll(' ', '_'), {
-          method: 'POST',
-          body: formData
+        let textoComando = "La ficha de trabajo social del usuario se ha guardado y ha sido enviada al correo del centro de atencion integral para la igualdad de genero y la salud sexual y reproductiva. Mencionaselo al usuario"
+        Conversar(textoComando, "text", true)
+        Swal.fire({
+          title: 'Éxito',
+          text: 'La firma ha sido guardada correctamente',
+          icon: 'success',
+          confirmButtonText: 'Aceptar'
+        }).then(() => {
+          // Cerrar modal después de guardar
+          
         });
 
-        const result = await response.json();
+        // const response = await fetch('/guardar-firma?archivo=' + archivo.replaceAll(' ', '_'), {
+        //   method: 'POST',
+        //   body: formData
+        // });
 
-        if (result.ok) {
-          nombreArchivoFirma = result.datos;
-          const modalFirma = bootstrap.Modal.getInstance(document.getElementById('modalFirma'));
-          if (modalFirma) modalFirma.hide();
-          enviarFormulario();
-          // Swal.fire({
-          //   title: 'Éxito',
-          //   text: 'La firma ha sido guardada correctamente',
-          //   icon: 'success',
-          //   confirmButtonText: 'Aceptar'
-          // }).then(() => {
-          //   // Cerrar modal después de guardar
+        // const result = await response.json();
+
+        // if (result.ok) {
+        //   nombreArchivoFirma = result.datos;
+        //   const modalFirma = bootstrap.Modal.getInstance(document.getElementById('modalFirma'));
+        //   if (modalFirma) modalFirma.hide();
+        //   enviarFormulario();
+        //   // Swal.fire({
+        //   //   title: 'Éxito',
+        //   //   text: 'La firma ha sido guardada correctamente',
+        //   //   icon: 'success',
+        //   //   confirmButtonText: 'Aceptar'
+        //   // }).then(() => {
+        //   //   // Cerrar modal después de guardar
             
-          // });
-        } else {
-          Swal.fire('Error', result.observacion || 'Error al guardar la firma', 'error');
-        }
+        //   // });
+        // } else {
+        //   Swal.fire('Error', result.observacion || 'Error al guardar la firma', 'error');
+        // }
       } catch (error) {
         console.error('Error:', error);
         Swal.fire('Error', 'Error al guardar la firma: ' + error.message, 'error');

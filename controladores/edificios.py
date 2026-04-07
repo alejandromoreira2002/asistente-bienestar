@@ -2,16 +2,12 @@ from modelos.edificios import EdificiosModelo
 from controladores.chats import ChatsControlador
 from controladores.algoritmo_ml import AlgoritmoMLControlador
 from funciones.algoritmos import fuzzy_lookup, norm
-from funciones.asistente import getPromptAsistentes
-from funciones.funciones import determinarSemanaActual, getRandomDF
 from flask import session
 import json
 import re
-from datetime import date
 from ollama import Client
 import os
 import time
-import pandas as pd
 
 class EdificiosControlador:
     def __init__(self, app):
@@ -39,14 +35,6 @@ class EdificiosControlador:
         ruta = 'data/data_edificios2.json'
         with open(ruta, 'r', encoding='utf-8') as f:
             return json.load(f)  # data es una lista de dicts
-
-    def getEdificios(self):
-        respuesta = self.modelo.getEdificios()
-
-        if respuesta['res']:
-            return respuesta['data']
-        else:
-            return {'ok': False, 'observacion': respuesta['data'], 'datos': None}
 
     def extract_components(self, query: str):
         comps = {}
@@ -186,86 +174,6 @@ class EdificiosControlador:
     def consumoSemana(self, edificio=None, piso=None, ambiente=None, fechaInicio=None, fechaFin=None):
         datos = self.modelo.consumoSemana(edificio, piso, ambiente, fechaInicio, fechaFin)
         return datos
-
-    def getPrediccion(self, query):
-        #session['intenciones']['siguiente'] = "ninguna"
-        textoLLM = ""
-        prompt_system = getPromptAsistentes('prediccion')
-
-        if 'prediccion' in session and 'msgs' in session['prediccion'] and len(session['prediccion']['msgs']) > 0:
-            msgsAsistente = [{'role': 'system', 'content': prompt_system}] + session['prediccion']['msgs'] + [{'role': 'user', 'content': query}]
-            print("Paso #2.1: Formateo de datos con el LLM para la prediccion.")
-            tiempo_inicio_pred = time.time()
-            textoLLM = self.preguntarAsistente(self.asistente, msgsAsistente, 'chat')
-            tiempo_fin_pred = time.time()
-            print(f"Formateo datos de prediccion: {tiempo_fin_pred - tiempo_inicio_pred:.2f} segundos")
-            print("Texto formateado para prediccion: \n", textoLLM)
-            #session['prediccion']['msgs'] = []
-            session.pop('prediccion', None)
-        else:
-            session['intenciones']['siguiente'] = "solicita_prediccion"
-            session['prediccion'] = {
-                'msgs': [
-                    {'role': 'user', 'content': 'Cual seria la prediccion para la siguiente semana?'},
-                    {'role': 'assistant', 'content': '¿Habrá algún evento especial, feriado o novedad que debamos tener en cuenta en alguno de los días de la próxima semana? Si es así, ¿podrían indicarme cuáles días y qué ocurrirá?'},
-                    {'role': 'user', 'content': query}
-                ]
-            }
-            #session['prediccion']['msgs'].append({'role': 'user', 'content': query})
-            #msgsAsistente = [{'role': 'system', 'content': prompt_system}] + [{'role': 'user', 'content': query}]
-            #textoLLM = self.preguntarAsistente(self.asistente, msgsAsistente, 'chat')
-            return {"success": True, "reason": query, "info": None}
-
-        fecha = date.today()
-        #Determinar las fechas de las semanas
-        lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
-
-        # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
-        ruta_json = 'data/consumo_energetico_2025_08_29.json' #Cambiar por data de base de datos
-        print("Paso #2.2: Creacion de los dataset de variables exogenas para prediccion.")
-        tiempo_inicio_df = time.time()
-        #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado
-        data_semana_consumo = getRandomDF(lunes_semana_actual, inicio_semana_nueva) #Cambiar por base de datos
-
-        # Se genera la data de variables exogenas para la prediccion
-        # Cambiar por la respuesta del LLM
-        #textoLLM = "DÍA: Lunes | TIPO: feriado\nDÍA: Martes | TIPO: normal\nDÍA: Miércoles | TIPO: normal\nDÍA: Jueves | TIPO: especial\nDÍA: Viernes | TIPO: especial\nDÍA: Sábado | TIPO: normal\nDÍA: Domingo | TIPO: normal"
-        print("Respuesta del LLM:")
-        print(textoLLM)
-        data_generada = self.controladorAlgoritmoML.generarDF(textoLLM, inicio_semana_nueva)
-
-        data_nueva = pd.concat([data_semana_consumo, data_generada], axis=0)
-
-        tiempo_fin_df = time.time()
-        print(f"Generacion de dataset exogenas para prediccion: {tiempo_fin_df - tiempo_inicio_df:.2f} segundos")
-        print("Data para prediccion:")
-        print(data_nueva)
-
-        fechas_prediccion = (lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva)
-        
-        print("Paso #2.3: Prediccion del consumo energetico para la siguiente semana.")
-        # Prediccion consumo del ambiente
-        df_full_ambiente = pd.read_json(ruta_json) #Cambiar por data de base de datos
-        tiempo_inicio_prediccion = time.time()
-        datos_prediccion_ambiente = self.controladorAlgoritmoML.predecirConsumo(df_full_ambiente,data_nueva,fechas_prediccion)
-
-        if not datos_prediccion_ambiente:
-            return {"success": False, "reason": "No tienes actualizada la informacion con los datos de la ultima semana.", "info": None}
-        datos_ultima_semana_ambiente = datos_prediccion_ambiente[-7:]
-
-        """
-        # Prediccion consumo de todo el edificio
-        df_full_edificio = pd.read_json(ruta_json) #Cambiar por data de base de datos
-        datos_prediccion_edificio = self.controladorAlgoritmoML.predecirConsumo(df_full_edificio,data_nueva,fechas_prediccion)
-        datos_ultima_semana_edificio = datos_prediccion_edificio[-7:]
-        """
-
-        tiempo_fin_prediccion = time.time()
-        print(f"Tiempo de prediccion del consumo energetico: {tiempo_fin_prediccion - tiempo_inicio_prediccion:.2f} segundos")
-        print("Datos de prediccion:")
-        print(datos_ultima_semana_ambiente)
-
-        return {"success": True, "reason": "Pudiste presentar los datos de prediccion de la siguiente semana.", "info": datos_ultima_semana_ambiente}
     
     def consultarConsumo(self, query):
         # Almacenar query al historial de consulta de nuevo prompt para consulta consumo
@@ -401,11 +309,3 @@ class EdificiosControlador:
 
         recomendaciones = response['response']
         return { "success": True, "reason": "Diste correctamente las recomendaciones para optimizar el consumo energetico. Ahora mencionaselo al usuario.", "info":recomendaciones }
-    
-    def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
-        respuesta = self.modelo.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
-
-        if respuesta['res']:
-            return respuesta['data']
-        else:
-            return {'ok': False, 'observacion': respuesta['data']['observacion'], 'datos': None}

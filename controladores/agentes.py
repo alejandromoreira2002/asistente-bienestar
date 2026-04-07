@@ -24,7 +24,6 @@ class AgentesControlador:
             generate, 
             nodo_consumo, 
             conector_consumo_prediccion, 
-            nodo_prediccion,
             consulta_usuario2,
             deteccion_intencion
         ) = self.modelo.getNodos(END, START)
