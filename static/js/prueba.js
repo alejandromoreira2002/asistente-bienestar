@@ -23,10 +23,57 @@ const Index = (function () {
 
   // Función para mandar datos al iframe
   function sendTalking(audioBase64, talking = 'false') {
-    iframe.contentWindow.postMessage(
-      { action: "base64", data: audioBase64, talking }, 
-      "*"
-    );
+    // iframe.contentWindow.postMessage(
+    //   { action: "base64", data: audioBase64, talking }, 
+    //   "*"
+    // );
+    enviarBase64(audioBase64, talking);
+  }
+
+  function base64ToBlobUrl(base64, mime = "audio/wav") {
+    // Limpia encabezados tipo "data:audio/wav;base64,..."
+    const cleaned = base64.replace(/^data:.*;base64,/, "").replace(/\s/g, "");
+    // console.log(`[base64ToBlobUrl] Longitud base64 limpia = ${cleaned.length} chars`);
+
+    // Decodifica en trozos para no reventar el stack de JS
+    const sliceSize = 1024 * 1024; // 1 MB
+    const byteChars = atob(cleaned);
+    const bytes = new Uint8Array(byteChars.length);
+    for (let offset = 0; offset < byteChars.length; offset += sliceSize) {
+      const end = Math.min(offset + sliceSize, byteChars.length);
+      for (let i = offset; i < end; i++) bytes[i] = byteChars.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], { type: mime });
+    const url = URL.createObjectURL(blob);
+    // console.log(`[base64ToBlobUrl] Blob creado: tamaño=${blob.size} bytes, url=${url}`);
+    return url;
+  }
+
+  function enviarBase64(base64Opt, talking) {
+      
+    const base64 = (typeof base64Opt === "string" && base64Opt.length) 
+      ? base64Opt 
+      : "";
+
+    if (!base64) {
+      alert("Ingresa un Base64 válido o espera datos del stream");
+      return;
+    }
+
+    let content = talking; // Por defecto, enviamos 'true' o 'false'
+    let webAudio = 'WebAudioStop'
+    console.log(`[enviarBase64] Talking: ${talking}, base64 length: ${base64.length}`);
+    if(talking === 'true'){
+      webAudio = 'WebAudioLoader'
+      // content = base64ToBlobUrl(base64, "audio/wav"); // o "audio/mpeg" si es MP3
+      content = base64.replace(/^data:.*;base64,/, "").replace(/\s/g, "");
+    }
+
+    // console.log(`[enviarBase64] Enviando a Unity WebAudioLoader -> ${url}`);
+    // unityInstance.SendMessage("SpeechPlayerServerWebGL", webAudio, content);
+    // console.log('Enviando mensaje a Vuplex: ', content);
+    window.vuplex.postMessage(content);
   }
 
   const audioMotion = new AudioMotionAnalyzer(document.getElementById('audioMotion'), {

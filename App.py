@@ -132,6 +132,12 @@ def prueba_chats():
     mensaje = controladorAsistente.getListaMensajes(session.get('hilo'))
     return jsonify(mensaje)
 
+@app.get('/prueba')
+def pagina_prueba():
+    session['intenciones'] = {'actual': 'ninguna', 'siguiente': 'ninguna'}
+    session['historial_consumo'] = []
+    return render_template('prueba.html')
+
 @app.post('/reaccionar-msg')
 def reaccionar_msg():
     if 'hilo' not in session:
@@ -383,10 +389,10 @@ def conversar():
                 #     social como un proceso previo al triaje y consulta medica del paciente. Pregunta y responde de 
                 #     forma profesional como un doctor lo haria. 
                 # """))
-            if comando:
-                historial_msgs.append(AIMessage(content=mensaje))
-            else:
-                historial_msgs.append(HumanMessage(content=mensaje))
+            # if comando:
+            #     historial_msgs.append(AIMessage(content=mensaje))
+            # else:
+            historial_msgs.append(HumanMessage(content=mensaje))
                 
             human_response = {"messages": historial_msgs, "datos":datosEnInfo}
             # print("Respuesta formateada para el grafo:")
@@ -425,16 +431,17 @@ def conversar():
                 buffer += token
                 txt_completo += token
                 
-                # if tipo=="voice" or tipo=="text" and comando:
-                # Cortar por signos de puntuación
-                parts = re.split(r'(?<=[.!?])\s+', buffer)
-                if len(parts) > 1:
-                    for sent in parts[:-1]:
-                        sent = sent.strip()
-                        if sent:
-                            audio = controladorAsistente.text_to_speech(sent)
-                            yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
-                    buffer = parts[-1]
+                print("AAAAAAAAAAAAAAAAAAAA", tipo, comando)
+                if tipo=="voice":
+                    # Cortar por signos de puntuación
+                    parts = re.split(r'(?<=[.!?])\s+', buffer)
+                    if len(parts) > 1:
+                        for sent in parts[:-1]:
+                            sent = sent.strip()
+                            if sent:
+                                audio = controladorAsistente.text_to_speech(sent)
+                                yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
+                        buffer = parts[-1]
             
             if clas == 'values' and '__interrupt__' in chunk:
                 #print(f"Interrupt:{chunk}")

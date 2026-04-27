@@ -10,7 +10,7 @@ from langchain.messages import SystemMessage, HumanMessage, ToolMessage, AIMessa
 from langgraph.graph import END, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.types import Command, interrupt
-# from langchain_ollama.chat_models import ChatOllama
+from langchain_ollama.chat_models import ChatOllama
 from operator import add
 from flask import session
 from db.db import PostgresDB
@@ -25,6 +25,8 @@ from controladores.algoritmo_ml import AlgoritmoMLControlador
 from funciones.algoritmos import getInfoLugar, norm, fuzzy_lookup
 from funciones.funciones import generarDF
 from data.globals import EVENT_BUFFERS
+import unicodedata
+from rapidfuzz import process, utils, fuzz
 
 class State(TypedDict):
     messages: Annotated[list[Any], add]
@@ -32,7 +34,7 @@ class State(TypedDict):
 
 class AgentesModelo:
     def __init__(self, app):
-        self.db = PostgresDB(app, os.getenv("PG_DBSB"))
+        self.db = PostgresDB(app, os.getenv("PG_DB"))
         # self.embeddings = HuggingFaceEmbeddings(
         #     model_name=os.getenv("EMBEDDING_MODEL"),
         #     model_kwargs={'device': 'cpu'},
@@ -44,7 +46,7 @@ class AgentesModelo:
         #     index_params={"index_type": "FLAT", "metric_type": "L2"},
         # )
         self.llm = init_chat_model("gpt-4o")
-        # self.llm = ChatOllama(model="qwen3:14b", base_url="http://172.16.188.53:3002/", temperature=0.2)
+        # self.llm = ChatOllama(model="gemma4:latest", base_url="http://172.16.188.53:3002/", temperature=0.2)
         # self.data = self.leerJSONEdificios()
         self.data = self.leerJSONCampos()
         # data = {
@@ -491,9 +493,11 @@ class AgentesModelo:
             """Generate tool call for retrieval or respond."""
             
             current_datos = state['datos'] if state['datos'] else {}
-            comando = current_datos.get('comando', False)
+            # comando = current_datos.get('comando', False)
+            comando = False
             
             if comando:
+                print("🔍 Comando detectado, generando respuesta del LLM...")
                 response = self.llm.invoke(state['messages'])
                 print("Respuesta del LLM en el momento que detecta comando: ")
                 print(state['messages'] + [response])
@@ -735,20 +739,25 @@ class AgentesModelo:
                             # messages_to_return.append(response2)
                         else:
                             # Enviar datos extraídos al EVENT_BUFFER
-                            try:
-                                EVENT_BUFFERS[session['hilo']].put_nowait({
-                                    "nombre": "extraccion_incrementales",
-                                    "valor": tool_args,
-                                    "seccion": seccion_actual
-                                })
-                            except:
-                                pass
+                            # too_args = self.procesamiento(tool_args, campos_completados)
+                            # try:
+                            #     EVENT_BUFFERS[session['hilo']].put_nowait({
+                            #         "nombre": "extraccion_incrementales",
+                            #         "valor": tool_args,
+                            #         "seccion": seccion_actual
+                            #     })
+                            # except:
+                            #     pass
                             
                             # Actualizar estado del formulario
                             nuevos_campos = list(tool_args.keys())
                             nuevos_campos_items = list(tool_args.items())
+                            tool_args_nuevo = {}
                             for campo, valor in list(tool_args.items()):
                                 # print("Procesando campo extraído: ", campo, valor)
+                                valor = self.procesamiento(campo, valor, campos_completados)
+                                tool_args_nuevo[campo] = valor
+                                
                                 campo_faltante = next((faltantes for faltantes in campos_faltantes if faltantes['id'] == campo), None)
                                 # print("Campo encontrado en faltantes: ", campo)
                                 # if campo in campos_faltantes:
@@ -766,7 +775,15 @@ class AgentesModelo:
                                         actualizacion_campo = {'id': campo, 'valor': valor}
                                         campos_completados[indice_campo] = actualizacion_campo
                                         print(f"Campo '{campo}' actualizado con nuevo valor: {valor} en posicion {indice_campo} de completados")
-                                    
+                            
+                            try:
+                                EVENT_BUFFERS[session['hilo']].put_nowait({
+                                    "nombre": "extraccion_incrementales",
+                                    "valor": tool_args_nuevo,
+                                    "seccion": seccion_actual
+                                })
+                            except:
+                                pass  
                                     
                             # print("Los campos que quedan por completar son: ", [campo['id'] for campo in campos_faltantes])
                             # print("Los campos completados son: ", [campo['id'] for campo in campos_completados])
@@ -1285,7 +1302,93 @@ Ahora responde sus preguntas o comentarios de manera natural y útil."""
             return {"messages": res_human, "datos": datos_consumo}
         
         return consulta_usuario, tools_node, get_intencion, generate, nodo_consumo, conector_consumo_prediccion, consulta_usuario2, deteccion_intencion
+    
+    def analizar_similitud(self, entrada_voz, lista_datos):
+        # Lo que el modelo de voz entendió mal
+        # entrada_voz = "Quininde"
+        # entrada_voz = lista_datos[i]
         
+        # Limpieza básica y comparación
+        entrada_voz = self.normalizar_texto(entrada_voz)
+        lista_datos_lower = [self.normalizar_texto(lc) for lc in lista_datos]
+        resultado = process.extractOne(
+            entrada_voz, 
+            # ciudades_validas, 
+            lista_datos_lower,
+            # processor=utils.default_process
+            scorer=fuzz.token_sort_ratio
+        )
+        
+        nombre_corregido, score, indice = resultado
+        # print(indice)
+        # print(f"Detectada: {entrada_voz} -> Ciudad registrada: {nombre_corregido} (Similitud: {score}%)")
+        # ciudades = {'detectada': entrada_voz, 'registrada': nombre_corregido, 'similitud': score}
+        ciudades = {'detectada': entrada_voz, 'registrada': lista_datos[indice], 'similitud': score}
+        # if score > 85:
+        # else:
+        #     ciudades = {}
+        return ciudades
     
+    def procesamiento(self, campo, valor, extra=None):
+        if campo in ['provincia', 'ciudad', 'parroquia']:
+            datos = None
+            if campo == 'provincia':
+                sql = """SELECT p.nombre AS provincia FROM bienestar.provincias p;"""
+                resultado = self.db.consultarDatos(sql)
+                datos = [r['provincia'] for r in resultado]
+            elif campo == 'ciudad':
+                campo_provincia = next((faltantes for faltantes in extra if faltantes['id'] == 'provincia'), None)
+                # if extra and 'provincia' in extra:
+                if campo_provincia:
+                    sql = f"""
+                        SELECT c.nombre AS ciudad 
+                        FROM bienestar.cantones c 
+                        JOIN bienestar.provincias p ON c.provincia_id = p.id 
+                        WHERE p.nombre = \'{campo_provincia['valor']}\';
+                    """
+                    resultado = self.db.consultarDatos(sql)
+                    datos = [r['ciudad'] for r in resultado]
+                # resultado = self.db.consultarDatos("""SELECT c.nombre AS ciudad FROM bienestar.cantones c;""")
+            elif campo == 'parroquia':
+                campo_provincia = next((faltantes for faltantes in extra if faltantes['id'] == 'provincia'), None)
+                campo_ciudad = next((faltantes for faltantes in extra if faltantes['id'] == 'ciudad'), None)
+                # if extra and 'provincia' in extra:
+                if campo_provincia and campo_ciudad:
+                    sql = f"""
+                        SELECT 
+                            pr.nombre AS parroquia 
+                        FROM bienestar.parroquias pr
+                        JOIN bienestar.cantones c ON pr.canton_id = c.id
+                        JOIN bienestar.provincias p ON c.provincia_id = p.id
+                        WHERE p.nombre = \'{campo_provincia['valor']}\' AND c.nombre = \'{campo_ciudad['valor']}\';
+                    """
+                    resultado = self.db.consultarDatos(sql)
+                    datos = [r['parroquia'] for r in resultado]
+                # resultado = self.db.consultarDatos("""SELECT p.nombre AS parroquia FROM bienestar.parroquias p;""")
+                # datos = [r['parroquia'] for r in resultado]
+                
+            if datos:
+                valor = self.analizar_similitud(valor, datos)['registrada']
+                # print(valor)
+                print(f"El valor mas similar es ", valor)
+        return valor
     
+    def normalizar_texto(self, texto):
+        """
+        Convierte a minúsculas, elimina tildes y caracteres especiales.
+        Ejemplo: 'SAN JOSÉ DE ANCÓN' -> 'san jose de ancon'
+        """
+        if not texto:
+            return ""
+        
+        # Convertir a minúsculas
+        texto = texto.lower()
+        
+        # Descomponer caracteres Unicode (NFD separa la letra de su tilde)
+        texto = unicodedata.normalize('NFD', texto)
+        
+        # Filtrar solo los caracteres que no sean marcas de acentuación (Non-Spacing Marks)
+        texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
+        
+        return texto
     
