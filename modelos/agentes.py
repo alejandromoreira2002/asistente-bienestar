@@ -1,3 +1,5 @@
+import re
+
 from langchain_milvus import Milvus
 from langchain_core.documents import Document
 from typing_extensions import List, TypedDict
@@ -274,7 +276,7 @@ class AgentesModelo:
                 facultad (Optional[str]): Facultad del paciente.
                 carrera (Optional[str]): Carrera del paciente.
                 modalidad (Optional[Literal["presencial", "hibrida", "en_linea"]]): Modalidad de estudio (PRESENCIAL, HÍBRIDA, EN LÍNEA).
-                nivel (Optional[str]): Nivel del paciente.
+                nivel (Optional[str]): Nivel del paciente, conviertelo en texto del número cardinal, ejemplo: "nivel 1" -> "PRIMER NIVEL".
 
             Returns:
                 Dict[str, Any]: Diccionario con los datos extraídos. Solo incluye campos que fueron proporcionados.
@@ -753,28 +755,31 @@ class AgentesModelo:
                             nuevos_campos = list(tool_args.keys())
                             nuevos_campos_items = list(tool_args.items())
                             tool_args_nuevo = {}
+                            observacion_completo = ["Se presentaron los siguientes problemas al intentar llenar alguno de los campos del formulario: "]
                             for campo, valor in list(tool_args.items()):
                                 # print("Procesando campo extraído: ", campo, valor)
-                                valor = self.procesamiento(campo, valor, campos_completados)
-                                tool_args_nuevo[campo] = valor
-                                
-                                campo_faltante = next((faltantes for faltantes in campos_faltantes if faltantes['id'] == campo), None)
-                                # print("Campo encontrado en faltantes: ", campo)
-                                # if campo in campos_faltantes:
-                                if campo_faltante:
-                                    campos_faltantes.remove(campo_faltante)
-                                    # campos_completados.append(campo)
-                                    campos_completados.append({'id': campo_faltante['id'], 'valor': valor})
-                                else:
-                                    # campo_completado = next((completados for completados in campos_completados if completados['id'] == campo), None)
-                                    print(f"Se reemplaza el valor del campo detectado")
-                                    indice_campo = next((i for i, c in enumerate(campos_completados) if c['id'] == campo and c['valor'] != valor), -1)
-                                    print(f"Indice de campo detectado '{campo}': {indice_campo}")
+                                valor, observacion = self.procesamiento(campo, valor, campos_completados)
+                                if observacion: observacion_completo.append(observacion)
+                                if valor:
+                                    tool_args_nuevo[campo] = valor
                                     
-                                    if indice_campo >= 0: 
-                                        actualizacion_campo = {'id': campo, 'valor': valor}
-                                        campos_completados[indice_campo] = actualizacion_campo
-                                        print(f"Campo '{campo}' actualizado con nuevo valor: {valor} en posicion {indice_campo} de completados")
+                                    campo_faltante = next((faltantes for faltantes in campos_faltantes if faltantes['id'] == campo), None)
+                                    # print("Campo encontrado en faltantes: ", campo)
+                                    # if campo in campos_faltantes:
+                                    if campo_faltante:
+                                        campos_faltantes.remove(campo_faltante)
+                                        # campos_completados.append(campo)
+                                        campos_completados.append({'id': campo_faltante['id'], 'valor': valor})
+                                    else:
+                                        # campo_completado = next((completados for completados in campos_completados if completados['id'] == campo), None)
+                                        print(f"Se reemplaza el valor del campo detectado")
+                                        indice_campo = next((i for i, c in enumerate(campos_completados) if c['id'] == campo and c['valor'] != valor), -1)
+                                        print(f"Indice de campo detectado '{campo}': {indice_campo}")
+                                        
+                                        if indice_campo >= 0: 
+                                            actualizacion_campo = {'id': campo, 'valor': valor}
+                                            campos_completados[indice_campo] = actualizacion_campo
+                                            print(f"Campo '{campo}' actualizado con nuevo valor: {valor} en posicion {indice_campo} de completados")
                             
                             try:
                                 EVENT_BUFFERS[session['hilo']].put_nowait({
@@ -788,13 +793,31 @@ class AgentesModelo:
                             # print("Los campos que quedan por completar son: ", [campo['id'] for campo in campos_faltantes])
                             # print("Los campos completados son: ", [campo['id'] for campo in campos_completados])
                             # Crear ToolMessage
+                            contenido_res = ""
+                            if len(observacion_completo) > 1:
+                                contenido_res = "\n".join(observacion_completo)
+                            else:
+                                contenido_res = f'Extrajiste correctamente los datos: {", ".join(nuevos_campos)}'
+                            
                             res_tool_call = ToolMessage(
-                                content=f'Extrajiste correctamente los datos: {", ".join(nuevos_campos)}',
+                                content=contenido_res,
                                 name=tool_name,
                                 tool_call_id=tool_call['id']
                             )
                             messages_to_return.append(res_tool_call)
-                    
+                            
+                            if len(observacion_completo) > 1:
+                                respuesta_conversacional1 = self.llm.invoke(messages_to_return)
+                                messages_to_return.append(respuesta_conversacional1)
+                                current_datos['form_state'] = form_state
+                                return Command(
+                                    update={
+                                        "messages": messages_to_return,
+                                        "datos": current_datos
+                                    },
+                                    goto=END
+                                )
+                            
                     # Ahora generar una respuesta del asistente DESPUÉS del ToolMessage
                     # Esto asegura que el frontend vea que está respondiendo tras procesar los datos
                     response_msg = None
@@ -1330,6 +1353,7 @@ Ahora responde sus preguntas o comentarios de manera natural y útil."""
         return ciudades
     
     def procesamiento(self, campo, valor, extra=None):
+        observacion = ""
         if campo in ['provincia', 'ciudad', 'parroquia']:
             datos = None
             if campo == 'provincia':
@@ -1368,10 +1392,58 @@ Ahora responde sus preguntas o comentarios de manera natural y útil."""
                 # datos = [r['parroquia'] for r in resultado]
                 
             if datos:
-                valor = self.analizar_similitud(valor, datos)['registrada']
-                # print(valor)
+                dato_analizado = self.analizar_similitud(valor, datos)
+                
+                if dato_analizado and dato_analizado['similitud'] > 80:
+                    valor = dato_analizado['registrada']
+                else:
+                    if dato_analizado and dato_analizado['similitud'] > 55:
+                        # valor = dato_analizado['registrada']
+                        observacion = f"- En cuanto a la {campo} puede que el usuario se quiera referir a \'{dato_analizado['registrada']}\'"
+                    else:
+                        observacion = f"- No existe {campo} registrada como '{valor}'."
+                    valor = None
+                # valor = dato_analizado['registrada']
                 print(f"El valor mas similar es ", valor)
-        return valor
+                print(observacion)
+        elif campo in ['facultad', 'carrera']:
+            # Aquí podrías implementar lógica similar para facultades y carreras si es necesario
+            datos = None
+            if campo == 'facultad':
+                valor = re.sub(r'^(facultad\s+(de\s+)?)', '', valor, flags=re.IGNORECASE).strip()
+                sql = """SELECT f.nombre AS facultad FROM bienestar.facultades f;"""
+                resultado = self.db.consultarDatos(sql)
+                datos = [r['facultad'] for r in resultado]
+            elif campo == 'carrera':
+                campo_facultad = next((faltantes for faltantes in extra if faltantes['id'] == 'facultad'), None)
+                # if extra and 'provincia' in extra:
+                if campo_facultad:
+                    sql = f"""
+                        SELECT c.nombre AS carrera 
+                        FROM bienestar.carreras c 
+                        JOIN bienestar.facultades f ON f.codigo  = c.facultades_id 
+                        WHERE f.nombre = \'{campo_facultad['valor']}\';
+                    """
+                    resultado = self.db.consultarDatos(sql)
+                    datos = [r['carrera'] for r in resultado]
+                # resultado = self.db.consultarDatos("""SELECT c.nombre AS carrera FROM bienestar.carreras c;""")
+                
+            if datos:
+                dato_analizado = self.analizar_similitud(valor, datos)
+                
+                if dato_analizado and dato_analizado['similitud'] > 80:
+                    valor = dato_analizado['registrada']
+                else:
+                    if dato_analizado and dato_analizado['similitud'] > 55:
+                        # valor = dato_analizado['registrada']
+                        observacion = f"- El usuario menciono la {campo} de {valor}. Es probable que se refiera a \'{dato_analizado['registrada']}\'. Mencionaselo para que confirme si es correcto."
+                    else:
+                        observacion = f"- El usuario menciono la {campo} carrera '{valor}'. Pero esta no se encuentra registrada."
+                    valor = None
+                # valor = dato_analizado['registrada']
+                print(f"El valor mas similar es ", valor)
+                print(observacion)
+        return valor, observacion
     
     def normalizar_texto(self, texto):
         """
@@ -1383,6 +1455,7 @@ Ahora responde sus preguntas o comentarios de manera natural y útil."""
         
         # Convertir a minúsculas
         texto = texto.lower()
+        texto = re.sub(r'[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]', '', texto)
         
         # Descomponer caracteres Unicode (NFD separa la letra de su tilde)
         texto = unicodedata.normalize('NFD', texto)

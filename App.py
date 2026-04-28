@@ -431,7 +431,6 @@ def conversar():
                 buffer += token
                 txt_completo += token
                 
-                print("AAAAAAAAAAAAAAAAAAAA", tipo, comando)
                 if tipo=="voice":
                     # Cortar por signos de puntuación
                     parts = re.split(r'(?<=[.!?])\s+', buffer)
